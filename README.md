@@ -27,3 +27,12 @@ node app.js
 - swarms try to maximize reach by propagating to their swarm (1) signal public keys and (2) known peer addresses
 - websocket, webrtc and signal connection/session establishment should be resilient to poor network
 - PRE-PRE-ALPHA VERY SLOW AND BUGGY TOUCH WITH A STICK ONLY, browser entrypoint is `bugout-signal-test.js`
+
+## Acknowledgements
+
+```
+https://github.com/signalapp/libsignal-protocol-javascript
+https://github.com/chr15m/bugout
+https://github.com/webtorrent/bittorrent-tracker
+https://github.com/socketio/socket.io
+```
