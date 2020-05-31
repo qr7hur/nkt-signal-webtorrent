@@ -19,6 +19,8 @@ node app.js
 # Hey kill app.js now, we don't need this loser
 # Try sending another message
 # See wow it worked again amazing
+
+# High level apis (TODO better) : window.sendEncryptedMessage(), window.nkt.userList
 ```
 
 ## Concept
