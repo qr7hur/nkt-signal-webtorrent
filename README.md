@@ -25,6 +25,7 @@ node app.js
 
 - 1 nkt browser tab = 1 peer
 - when available, peers advertise themselves through app.js websocket
+- app.js be the lightest (no express)
 - [TODO] manual connection /connect [peerAddr-as-listed-on-trackers]
 - each peer has a swarm of known users, there is 1 swarm per user
 - some peers in the swarm are reachable webrtc peers (joinable on websocket server unreachable)

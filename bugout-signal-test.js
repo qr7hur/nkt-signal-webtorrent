@@ -95,8 +95,8 @@ function startSignalSessionWith(addr) {
         var bobSessionCipher = new libsignal.SessionCipher(bobStore, ALICE_ADDRESS);
         window.nkt.userList[addr].sessionCipher = bobSessionCipher;
         bobSessionCipher.encrypt(originalMessage).then((ciphertext) => {
-            console.log('ciphertext');
-            console.log(ciphertext);
+            //console.log('ciphertext');
+            //console.log(ciphertext);
             resilientSend({
                 msgType: 'sessionEstablishment',
                 msgData: ciphertext.body,
@@ -151,66 +151,6 @@ function encryptMessageTo(message, to) {
     }
     return bobSessionCipher.encrypt(utf8_to_b64(message));
 }
-
-/*
-
-var alice_id = utf8_to_b64(window.crypto.getRandomValues(new Uint8Array(10)));
-var bob_id = utf8_to_b64(window.crypto.getRandomValues(new Uint8Array(10)));
-var ALICE_ADDRESS = new libsignal.SignalProtocolAddress(alice_id, 1);
-var BOB_ADDRESS   = new libsignal.SignalProtocolAddress(bob_id, 1);
-
-var aliceStore = new libsignal.SignalProtocolStore();
-//var aliceStore = new SignalProtocolStore();
-
-var bobStore = new libsignal.SignalProtocolStore();
-//var bobStore = new SignalProtocolStore();
-
-var bobPreKeyId = 1337;
-var bobSignedKeyId = 1;
-
-//var Curve = libsignal.Curve;
-
-Promise.all([
-    generateIdentity(aliceStore),
-    generateIdentity(bobStore),
-]).then(function() {
-    return generatePreKeyBundle(bobStore, bobPreKeyId, bobSignedKeyId);
-}).then(function(preKeyBundle) {
-    // HERE BOB ADVERTISES HIS ADDRESS 
-    var builder = new libsignal.SessionBuilder(aliceStore, BOB_ADDRESS);
-    return builder.processPreKey(preKeyBundle).then(function() {
-
-        //var originalMessage = util.toArrayBuffer("my message ......");
-        var originalMessage = utf8_to_b64("test test");
-        var aliceSessionCipher = new libsignal.SessionCipher(aliceStore, BOB_ADDRESS);
-        var bobSessionCipher = new libsignal.SessionCipher(bobStore, ALICE_ADDRESS);
-
-        aliceSessionCipher.encrypt(originalMessage).then(function(ciphertext) {
-
-            // check for ciphertext.type to be 3 which includes the PREKEY_BUNDLE
-            return bobSessionCipher.decryptPreKeyWhisperMessage(ciphertext.body, 'binary');
-
-        }).then(function(plaintext) {
-
-            bobSessionCipher.encrypt(originalMessage).then(function(ciphertext) {
-
-            return aliceSessionCipher.decryptWhisperMessage(ciphertext.body, 'binary');
-
-            }).then(function(plaintext) {
-
-            console.log(b64_to_utf8(signalUtil.toString((plaintext))));
-            console.log(b64_to_utf8(originalMessage));
-
-            });
-
-        });
-
-    });
-});
-
-
-*/
-
 
 
 // BUGOUT SERVER
@@ -513,14 +453,18 @@ function parseSessionEstablishment(e) {
     return decryptMessageFrom(e.detail.data.msgData, e.detail.data.msgFrom);
 }
 
+function sendEncryptedMessage(str) {
+    resilientSend({
+        msgType: 'humanMessage',
+        msgData: str,
+        msgDate: (new Date()).getTime().toString(),
+        msgFrom: window.nkt.mySwarm.address()
+    }, true);
+}
+
 function setListeners() {
     document.getElementById('submit').addEventListener('click', function(e) {
-        resilientSend({
-            msgType: 'humanMessage',
-            msgData: document.getElementById('message').value,
-            msgDate: (new Date()).getTime().toString(),
-            msgFrom: window.nkt.mySwarm.address()
-        }, true);
+        sendEncryptedMessage(document.getElementById('message').value);
     });
     window.addEventListener('nktincomingdata', function(e) {
         if (
