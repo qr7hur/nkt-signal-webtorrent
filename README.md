@@ -13,6 +13,8 @@ npm install
 node app.js
 
 # Visit http://localhost:3000 on tab 1, tab2
+# Go take a coffee (10 sec) or open browser console
+# Type a message, clic 'send' (use mouse)
 ```
 
 ## Concept
