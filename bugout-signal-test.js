@@ -97,7 +97,8 @@ function startSignalSessionWith(addr) {
     var preKeyBundle = window.nkt.userList[addr].preKey;
     var bobStore = window.nkt.signalStore;
     console.log('starting signal session with ' + addr);
-    return builder.processPreKey(preKeyBundle).then(function() {
+    return builder.processPreKey(preKeyBundle).then(() => {
+        if (window.nkt.userList[addr].sessionEstablished) return;
         var originalMessage = utf8_to_b64(addr); // for double check on arrival
         var bobSessionCipher = new libsignal.SessionCipher(bobStore, ALICE_ADDRESS);
         window.nkt.userList[addr].sessionCipher = bobSessionCipher;
@@ -112,6 +113,7 @@ function startSignalSessionWith(addr) {
                 msgFrom: window.nkt.mySwarm.address(),
                 msgTo: addr
             });
+            setTimeout(()=>window.nkt.userList[addr].sessionError = false, 5000);
         }).catch((err) => {console.log('encrypt err');console.log(err);});
         window.nkt.userList[addr].sessionEstablishing = setInterval(() => {
             /*
@@ -138,9 +140,11 @@ function decryptPreKeyMessageFrom(message, from) {
         .decryptPreKeyWhisperMessage(message, 'binary')
         .then(plaintext => Promise.resolve(b64_to_utf8(signalUtil.toString(plaintext))))
         .catch(err => {
-            console.log('decryptPreKeyMessageError');
-            console.log(err);
+            //console.log('decryptPreKeyMessageError');
+            //console.log(err);
+            //if (window.nkt.userList[from].sessionError) return;
             console.log('trying to start new session');
+            window.nkt.userList[from].sessionError = true;
             startSignalSessionWith(from);
         })
     );
@@ -152,9 +156,11 @@ function decryptMessageFrom(message, from) {
         .decryptWhisperMessage(message, 'binary')
         .then(plaintext => Promise.resolve(b64_to_utf8(signalUtil.toString(plaintext))))
         .catch(err => {
-            console.log('decryptMessageError');
-            console.log(err);
+            //console.log('decryptMessageError');
+            //console.log(err);
+            //if (window.nkt.userList[from].sessionError) return;
             console.log('trying to start new session');
+            window.nkt.userList[from].sessionError = true;
             startSignalSessionWith(from);
         })
     );
@@ -248,7 +254,8 @@ function beginSwarmAddrBroadcast() {
         window.broadcastingSwarmAddr = false;
         resilientSend({
             msgType: 'newSwarmAddress',
-            msgFrom: window.nkt.mySwarm.address()
+            msgFrom: window.nkt.mySwarm.address(),
+            msgDate: (new Date()).getTime().toString()
         });
         /*
         window.nkt.websocket.emit('nkt', {
@@ -284,6 +291,19 @@ function handleMessageFromSwarm(address, message) {
     checkNotAlreadyIn(message, 'receivedMessages')
     .then(function() {
         message.fromChannel = 'webrtc';
+        if (message.msgType === 'newSwarmAddress') { // for me
+            if (!window.nkt.userList[message.msgFrom].swarmClient) {
+                console.log('HEARING FROM SOMEONE IM NOT CONNECTED TO WEBRTC');
+                //startWebRTCClient(message.msgFrom);
+            }
+            if (!window.nkt.userList[message.msgFrom].sessionEstablished) {
+                /*
+                console.log('HEARING FROM SOMEONE IM NOT CONNECTED TO SIGNAL');
+                startAskingForPreKey({
+                    detail: { data: {addr: message.msgFrom} }
+                });*/
+            }
+        }
         handleNewMessageReceived(message);
     })
     .catch(function() {
@@ -299,8 +319,24 @@ function handleMessageFromSwarm(address, message) {
             if (userList[i].swarmAddress) {
                 window.nkt.mySwarm.send(userList[i].swarmAddress, message);
             }
+
+             /* // TODO use also swarmClients
+                if (
+                    userList[i].swarmClient
+                    && userList[i].sessionEstablished
+                    && message.msgType === 'encrypted'
+                ) {
+                    try {
+                        userList[i].swarmClient.send(message);
+                    } catch(e) {
+                        // console.log(e);
+                    }
+                }
+            */
+                
         }
-    })
+        
+    }).catch(()=>{})
 }
 
 function resilientSend(msgObj, encryptedBool) {
@@ -334,7 +370,7 @@ function resilientSend(msgObj, encryptedBool) {
             window.nkt.websocket.emit('nkt', msgObj);
             for (let i in userList) {
                 if (userList[i].swarmClient) {
-                    if (msgObj.msgTo) { // pour un destinataire
+                    if (msgObj.msgTo && false) { // pour un destinataire //TODO utile ?
                         try {
                             userList[i].swarmClient.send(msgObj.msgTo, msgObj);
                         } catch(e) {console.log(e);}
@@ -501,11 +537,13 @@ function setListeners() {
             || e.detail.data.msgTo !== window.nkt.mySwarm.address()
         ) return;
         decryptMessageFrom(e.detail.data.msgData, e.detail.data.msgFrom).then( (plaintext) => {
-            var msg = JSON.parse(plaintext);
-            if (msg.msgType !== 'humanMessage') return;
-            var pre = document.createElement('pre');
-            pre.textContent = msg.msgData;
-            document.getElementById('chat').appendChild(pre);
+            try {
+                var msg = JSON.parse(plaintext);
+                if (msg.msgType !== 'humanMessage') return;
+                var pre = document.createElement('pre');
+                pre.textContent = msg.msgData;
+                document.getElementById('chat').appendChild(pre);
+            } catch(e) {}
         }).catch(err => console.log(err))
     });
 
@@ -539,6 +577,8 @@ function setListeners() {
                         msgDate: (new Date()).getTime().toString(),
                         msgFrom: window.nkt.mySwarm.address()
                     }, true);
+                } else {
+                    delete window.nkt.userList[e.detail.data.msgFrom];
                 }
             }).catch((err) => {
                 clearInterval(window.nkt.userList[e.detail.data.msgFrom].sessionEstablishing);
@@ -552,9 +592,9 @@ function setListeners() {
     window.nkt = {}
     window.nkt.trackers = [
         "ws://localhost:8000",
-        //"wss://hub.bugout.link",
-        //"wss://tracker.openwebtorrent.com",
-        //"wss://tracker.btorrent.xyz",
+        "wss://hub.bugout.link",
+        "wss://tracker.openwebtorrent.com",
+        "wss://tracker.btorrent.xyz",
     ];
     window.nkt.userList = {};
     window.nkt.sentMessages = [];
