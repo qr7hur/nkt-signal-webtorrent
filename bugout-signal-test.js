@@ -510,9 +510,8 @@ function parseSessionEstablishment(e) {
 }
 
 function sendEncryptedMessage(str) {
-    window.dispatchEvent(new CustomEvent('nktoutgoingdata', {
-        detail: { data: str }
-    }));
+    var cont = window.dispatchEvent(new CustomEvent('nktsendingmessage', {detail: str}));
+    if (!cont) return;
     resilientSend({
         msgType: 'humanMessage',
         msgData: str,
@@ -540,9 +539,12 @@ function setListeners() {
             try {
                 var msg = JSON.parse(plaintext);
                 if (msg.msgType !== 'humanMessage') return;
+                window.dispatchEvent(new CustomEvent('nktmessagereceived', {detail: msg.msgData}));
+                /*
                 var pre = document.createElement('pre');
                 pre.textContent = msg.msgData;
                 document.getElementById('chat').appendChild(pre);
+                */
             } catch(e) {}
         }).catch(err => console.log(err))
     });
@@ -596,6 +598,25 @@ function setListeners() {
     });
 }
 
+function initPluginManager() {
+    window.nkt.plugins = {};
+    return (plugin) => {
+        if (Object(plugin) !== plugin) {
+            throw new Error('plugin is not an object');
+        }
+        if (!plugin.name) {
+            throw new Error('plugin.name empty');
+        }
+        if (Object(plugin.listeners) !== plugin.listeners) {
+            throw new Error('plugin.listeners must be an object');
+        }
+        window.nkt.plugins[plugin.name] = plugin;
+        for (let event in plugin.listeners) {
+            window.addEventListener(event, plugin.listeners[event]);
+        }
+    };
+}
+
 ;(function() {
     window.nkt = {}
     window.nkt.trackers = [
@@ -618,4 +639,22 @@ function setListeners() {
     });
     window.nkt.websocket.on('nkt', handlePingFromWebSocket);
     setListeners();
+
+    // plugin test
+    window.nkt.plugin = initPluginManager();
+    window.nkt.plugin({
+        name: 'displayMessage',
+        listeners: {
+            nktmessagereceived: (event) => {
+                var cont = window.dispatchEvent(new CustomEvent('nktdisplaymessage', {detail: event.detail}));
+                if (!cont) return;
+                var pre = document.createElement('pre');
+                pre.textContent = event.detail;
+                document.getElementById('chat').appendChild(pre);
+            },
+            nktsendingmessage: (event) => {
+                console.log('sending ' + event.detail)
+            }
+        }
+    });
 })();

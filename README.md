@@ -24,6 +24,7 @@ node app.js
 # - window.sendEncryptedMessage() to send high level message (for human or bot)
 # - window.nkt.userList (not so high level, but hey)
 # - events with misleading names like 'nktnewpeer' (may fire several times), 'nktincomingdata', 'nktoutgoingdata' 
+# - better events : nktmessagereceived, nktsendingmessage ... plugin can define events too, like nktdisplaymessage
 ```
 
 ## Concept
