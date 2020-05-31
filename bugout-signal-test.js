@@ -73,7 +73,14 @@ function generatePreKeyBundle(store, preKeyId, signedPreKeyId) {
 function signalInit(addr) {
     var BOB_ADDRESS   = new libsignal.SignalProtocolAddress(addr, 1);
     var bobStore = new libsignal.SignalProtocolStore();
+    /*
     var bobPreKeyId = 1337;
+    var bobSignedKeyId = 1;
+   
+    var bobPreKeyId = Math.floor(Math.random()*100000000000000000);
+    var bobSignedKeyId = Math.floor(Math.random()*100000000000000000);
+     */
+    var bobPreKeyId = 1;
     var bobSignedKeyId = 1;
     return generateIdentity(bobStore).then(function() {
         return Promise.all([
@@ -130,7 +137,12 @@ function decryptPreKeyMessageFrom(message, from) {
         window.nkt.userList[from].sessionCipher
         .decryptPreKeyWhisperMessage(message, 'binary')
         .then(plaintext => Promise.resolve(b64_to_utf8(signalUtil.toString(plaintext))))
-        .catch(err => {console.log('decryptPreKeyMessageError');console.log(err)})
+        .catch(err => {
+            console.log('decryptPreKeyMessageError');
+            console.log(err);
+            console.log('trying to start new session');
+            startSignalSessionWith(from);
+        })
     );
 }
 
@@ -139,7 +151,12 @@ function decryptMessageFrom(message, from) {
         window.nkt.userList[from].sessionCipher
         .decryptWhisperMessage(message, 'binary')
         .then(plaintext => Promise.resolve(b64_to_utf8(signalUtil.toString(plaintext))))
-        .catch(err => {console.log('decryptMessageError');console.log(err)})
+        .catch(err => {
+            console.log('decryptMessageError');
+            console.log(err);
+            console.log('trying to start new session');
+            startSignalSessionWith(from);
+        })
     );
 }
 
@@ -229,10 +246,16 @@ function handleUnknownSwarmAddress(swarmAddr) {
 function beginSwarmAddrBroadcast() {
     if (!window.broadcastingSwarmAddr) {
         window.broadcastingSwarmAddr = false;
+        resilientSend({
+            msgType: 'newSwarmAddress',
+            msgFrom: window.nkt.mySwarm.address()
+        });
+        /*
         window.nkt.websocket.emit('nkt', {
             msgType: 'newSwarmAddress',
             msgFrom: window.nkt.mySwarm.address()
         });
+        */
         setTimeout(beginSwarmAddrBroadcast, 5000);
     }
 }
