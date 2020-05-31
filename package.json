@@ -1,0 +1,12 @@
+{
+  "name": "nkt-bugout-signal",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "socket.io": "^2.3.0",
+    "url": "^0.11.0"
+  }
+}
