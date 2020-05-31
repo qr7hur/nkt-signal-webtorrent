@@ -13,8 +13,12 @@ npm install
 node app.js
 
 # Visit http://localhost:3000 on tab 1, tab2
-# Go take a coffee (10 sec) or open browser console
+# Go take a coffee (10 sec - crypto is fast BUT session establishment is meh) or open browser console
 # Type a message, clic 'send' (use mouse)
+# See wow message on other tab amazing
+# Hey kill app.js now, we don't need this loser
+# Try sending another message
+# See wow it worked again amazing
 ```
 
 ## Concept
