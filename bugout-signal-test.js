@@ -342,9 +342,6 @@ function handleMessageFromSwarm(address, message) {
 function resilientSend(msgObj, encryptedBool) {
     checkNotAlreadyIn(msgObj, 'sentMessages')
     .then(function() {
-        window.dispatchEvent(new CustomEvent('nktoutgoingdata', {
-            detail: { data: msgObj }
-        }));
         //send through websocket,
         //loop for userList,  if swarmClient send also with webrtc
         var userList = window.nkt.userList;
@@ -513,6 +510,9 @@ function parseSessionEstablishment(e) {
 }
 
 function sendEncryptedMessage(str) {
+    window.dispatchEvent(new CustomEvent('nktoutgoingdata', {
+        detail: { data: str }
+    }));
     resilientSend({
         msgType: 'humanMessage',
         msgData: str,
@@ -546,11 +546,19 @@ function setListeners() {
             } catch(e) {}
         }).catch(err => console.log(err))
     });
+    window.addEventListener('nktnewpeer', function(e) {
+        var addr = e.detail.data.addr;
+        if (window.nkt.userList[addr] && window.nkt.userList[addr].wasShown) return;
+        var pre = document.createElement('pre');
+        pre.textContent = 'someone joined';
+        document.getElementById('chat').appendChild(pre);
+        window.nkt.userList[addr].wasShown = true;
+    });
 
     // Signal
     window.addEventListener('nktnewpeer', function(e) {
         startAskingForPreKey(e);
-    })
+    });
     window.addEventListener('nktincomingdata', function(e) {
         if (e.detail.data.msgType === 'preKeyRequest') {
             if (!e.detail.data.msgFrom) return;
