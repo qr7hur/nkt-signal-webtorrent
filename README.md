@@ -13,12 +13,11 @@ npm install
 node app.js
 
 # Visit http://localhost:3000 on tab 1, tab2
-# Go take a coffee (10 sec - crypto is fast BUT session establishment is meh) or open browser console
-# Type a message, clic 'send' (use mouse)
-# See wow message on other tab amazing
+# Login, type a message, send
+# See message on other tab
 # Hey kill app.js now, we don't need this loser
 # Try sending another message
-# See wow it worked again amazing
+# Message should be received through webrtc
 
 # High level apis (TODO better) :
 # - window.nkt.sendEncryptedMessage() to send high level message (for human or bot)
@@ -40,6 +39,7 @@ node app.js
 - swarms try to maximize reach by propagating to their swarm (1) signal public keys and (2) known peer addresses
 - websocket, webrtc and signal connection/session establishment should be resilient to poor network
 - PRE-PRE-ALPHA VERY SLOW AND BUGGY TOUCH WITH A STICK ONLY, browser entrypoint is `bugout-signal-test.js`
+- MERGE WITH NKT IN PROGRESS
 
 ## Acknowledgements
 
