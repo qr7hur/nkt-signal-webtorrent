@@ -1,5 +1,9 @@
 ; (function () {
 
+    function genRandomStr() {
+        return toHexString(window.crypto.getRandomValues(new Uint32Array(10)));
+    }
+
     function utf8_to_b64(str) {
         return window.btoa(unescape(encodeURIComponent(str)));
     }
@@ -327,7 +331,7 @@
                 //console.log('already received');
                 //do nothing
             });
-
+/*
         checkNotAlreadyIn(message, 'sentMessages')
             .then(function () {
                 // broadcast to my swarm
@@ -352,13 +356,16 @@
                             }
                         }
                     */
+                   /*
 
                 }
 
             }).catch(() => { })
+            */
     }
 
     function resilientSend(msgObj, encryptedBool, msgTo) {
+        if (Object(msgObj) === msgObj) msgObj.uid = msgObj.uid || genRandomStr();
         checkNotAlreadyIn(msgObj, 'sentMessages')
             .then(function () {
                 //send through websocket,
@@ -373,7 +380,8 @@
                                 msgType: 'encrypted',
                                 msgData: ciphertext.body,
                                 msgTo: i,
-                                msgFrom: window.nkt.mySwarm.address()
+                                msgFrom: window.nkt.mySwarm.address(),
+                                uid: genRandomStr()
                             };
                             window.nkt.websocket.emit(window.nkt.websocketEventName, msg);
                             if (userList[i].swarmClient) userList[i].swarmClient.send(msg);
@@ -415,6 +423,20 @@
     }
 
     function checkNotAlreadyIn(msgObj, arrayName) {
+        if (
+            (Object(msgObj) === msgObj
+            && window.nkt[arrayName].indexOf(msgObj.uid) === -1)
+            || !msgObj.uid
+        ) {
+            addToMessageArray(msgObj.uid, arrayName);
+            if (!msgObj.uid) {
+                console.log(arrayName + ' NO UID IN');
+                console.log(msgObj);
+            }
+            return Promise.resolve();
+        }
+        return Promise.reject();
+        /*
         return hashMessageObject(msgObj).then(function (hashBuffer) {
             var str = toHexString(new Uint8Array(hashBuffer));
             //console.log('checking not already in')
@@ -425,6 +447,7 @@
             }
             return Promise.reject();
         });
+        */
     }
 
     function hashMessageObject(msgObj) {
@@ -792,7 +815,6 @@
         window.nkt.websocket.on(window.nkt.websocketEventName, handlePingFromWebSocket);
         window.nkt.sendEncryptedMessage = sendEncryptedMessage;
         window.nkt.sendClearMessage = sendClearMessage;
-        window.nkt.startWebRTCClient = startWebRTCClient; // for manual join without websocket
         setListeners();
         window.nkt.plugin = initPluginManager();
 
