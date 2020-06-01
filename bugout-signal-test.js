@@ -176,15 +176,18 @@
 
     // BUGOUT SERVER
     function startWebRTCServer() {
-        var b = new Bugout(undefined, { "announce": window.nkt.trackers });
+        var b = new Bugout(window.nkt.singleSwarmID, { "announce": window.nkt.trackers });
+        b.heartbeat(2000);
         b.on('message', function (address, message) {
             handleMessageFromSwarm(address, message);
-        });;
+        });
+        b.on('seen', (addr)=>{console.log('RTC SEEN');console.log(addr);});
         return b;
     }
 
     // BUGOUT CLIENT
     function startWebRTCClient(addr) {
+        /*
         var b = new Bugout(addr, { "announce": window.nkt.trackers });
         // Successfully joined user's swarm
         b.on('server', function (address) {
@@ -208,6 +211,7 @@
                 startWebRTCClient(addr);
             }
         }, 5000);
+        */
     }
 
     function handlePingFromWebSocket(message) {
@@ -285,6 +289,8 @@
     }
 
     function handleMessageFromSwarm(address, message) {
+        //console.log('RECEIVED MESSAGE FROM SWARM');
+        //console.log(message);
         if (Object(message) === message && message.msgFrom) {
             setClientAddressForSwarmPeer(message.msgFrom, address);
         }
@@ -292,9 +298,11 @@
             .then(function () {
                 message.fromChannel = 'webrtc';
                 if (message.msgType === 'newSwarmAddress') { // for me
-                    if (!window.nkt.userList[message.msgFrom].swarmClient) {
-                        console.log('HEARING FROM SOMEONE IM NOT CONNECTED TO WEBRTC');
-                        //startWebRTCClient(message.msgFrom);
+                    if (!window.nkt.singleSwarmID) {
+                        if (!window.nkt.userList[message.msgFrom].swarmClient) {
+                            console.log('HEARING FROM SOMEONE IM NOT CONNECTED TO WEBRTC');
+                            //startWebRTCClient(message.msgFrom);
+                        }
                     }
                     if (!window.nkt.userList[message.msgFrom].sessionEstablished) {
                         /*
@@ -315,9 +323,10 @@
             .then(function () {
                 // broadcast to my swarm
                 var userList = window.nkt.userList;
+                if (window.nkt.singleSwarmID) window.nkt.mySwarm.send(message);
                 for (let i in userList) {
                     if (userList[i].isUnreachable) continue;
-                    if (userList[i].swarmAddress) {
+                    if (userList[i].swarmAddress && !window.nkt.singleSwarmID) {
                         window.nkt.mySwarm.send(userList[i].swarmAddress, message);
                     }
 
@@ -359,6 +368,8 @@
                             };
                             window.nkt.websocket.emit(window.nkt.websocketEventName, msg);
                             if (userList[i].swarmClient) userList[i].swarmClient.send(msg);
+                            //if (window.nkt.singleSwarmID) window.nkt.mySwarm.send(userList[i].swarmAddress, msg);
+                            if (window.nkt.singleSwarmID) window.nkt.mySwarm.send(msg);
                         }).catch((err) => {
                             if (window.nkt.userList[i].sessionCipher) {
                                 console.log('error sending encrypted msg');
@@ -368,6 +379,7 @@
                     }
                 } else {
                     window.nkt.websocket.emit(window.nkt.websocketEventName, msgObj);
+                    if (window.nkt.singleSwarmID) window.nkt.mySwarm.send(msgObj);
                     for (let i in userList) {
                         if (userList[i].isUnreachable) continue;
                         if (userList[i].swarmClient) {
@@ -613,6 +625,7 @@
             if (
                 e.detail.data.msgType !== 'encrypted'
                 || e.detail.data.msgTo !== window.nkt.mySwarm.address()
+                || e.detail.data.msgTo === e.detail.data.msgFrom
             ) return;
             decryptMessageFrom(e.detail.data.msgData, e.detail.data.msgFrom).then((plaintext) => {
                 try {
@@ -740,6 +753,7 @@
 
     ; (function () {
         window.nkt = {};
+        window.nkt.singleSwarmID = "nktRYLi0Sn7BEQSPfo3KOiewur1gec";
         window.nkt.trackers = [
             "wss://hub.bugout.link",
             "wss://tracker.openwebtorrent.com",

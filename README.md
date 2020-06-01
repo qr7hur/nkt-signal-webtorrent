@@ -33,11 +33,13 @@ node app.js
 ## Concept
 
 - 1 nkt browser tab = 1 peer = 1 webtorrent/webrtc "server" (bugout)
+-- EDIT : nope, use SINGLE SWARM IDENTIFIER FOR ALL PEERS
 - when available, peers advertise themselves through app.js websocket
 - peers also announce themselves on various webtorrent trackers
 - app.js should be as lightweight as possible (no express, pg ...)
 - [TODO] manual connection /connect [peerAddr-as-listed-on-trackers] (calling window.nkt.startWebRTCClient)
 - each peer has a swarm of known users, there is 1 swarm per user
+-- EDIT : nope, use SINGLE SWARM IDENTIFIER FOR ALL PEERS
 - some peers in the swarm are reachable webrtc peers (joinable on websocket server unreachable)
 - messages are sent through webrtc and websocket and deduplicated
 - when a peer is added to the swarm, a signal session is established for secure messaging (libsignal)
