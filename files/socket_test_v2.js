@@ -73,7 +73,7 @@ var launch = function() {
 			//data.nickSrc = btoa(myNick);
 			//data.pubKeySrc = pubKey;
 			//socket.emit('ping2',data);
-			window.nkt.sendEncryptedMessage({
+			window.nkt.sendClearMessage({
 				ping: true,
 				nickSrc: btoa(myNick),
 				pubKeySrc: pubKey
@@ -460,14 +460,14 @@ var launch = function() {
 	setTimeout(function(){
 		socket_connect();
 		// Sockets events
-		window.addEventListener('nktmessagereceived', (event) => {
-			if (!event.detail.ping) {
-				disp_msg(event.detail);
-			} else {
-				let data = event.detail;
-				if(typeof data !== 'object' || !data.pubKeySrc || !data.nickSrc) return;
-				save_key(data.pubKeySrc, atob(data.nickSrc));
-			}
+		window.addEventListener('nktencryptedmessagereceived', (event) => {
+			disp_msg(event.detail);
+		});
+		window.addEventListener('nktclearmessagereceived', (event) => {
+			let data = event.detail;
+			if(typeof data !== 'object' || !data.pubKeySrc || !data.nickSrc) return;
+			if(!event.detail.ping) return;
+			save_key(data.pubKeySrc, atob(data.nickSrc));
 		});
 		/*
 		socket.on('new_msg2', disp_msg);
@@ -498,7 +498,7 @@ var launch = function() {
 			$('textarea').focus();
 			setInterval(function(){
 				//if(myNick) socket.emit('ping2',{pubKeySrc:pubKey,nickSrc:btoa(myNick)});
-				if(myNick) window.nkt.sendEncryptedMessage({
+				if(myNick) window.nkt.sendClearMessage({
 					ping: true,
 					nickSrc: btoa(myNick),
 					pubKeySrc: pubKey

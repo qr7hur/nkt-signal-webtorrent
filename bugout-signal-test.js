@@ -501,6 +501,15 @@
         }, true);
     }
 
+    function sendClearMessage(str) {
+        resilientSend({
+            msgType: 'humanMessage',
+            msgData: str,
+            msgDate: (new Date()).getTime().toString(),
+            msgFrom: window.nkt.mySwarm.address()
+        }, false);
+    }
+
     function setDebugListeners() {
         document.getElementById('submit').addEventListener('click', function (e) {
             sendEncryptedMessage(document.getElementById('message').value);
@@ -516,7 +525,7 @@
         window.nkt.plugin({
             name: 'displayMessage',
             listeners: {
-                nktmessagereceived: (event) => {
+                nktencryptedmessagereceived: (event) => {
                     var cont = window.dispatchEvent(new CustomEvent('nktdisplaymessage', { detail: event.detail }));
                     if (!cont) return;
                     var pre = document.createElement('pre');
@@ -535,6 +544,19 @@
             if (
                 !e.detail.data.msgData
                 || !e.detail.data.msgType
+                || !e.detail.data.msgFrom
+            ) return;
+            if (e.detail.data.msgType === 'encrypted') return;
+            try {
+                var msg = e.detail.data;
+                if (msg.msgType !== 'humanMessage') return;
+                window.dispatchEvent(new CustomEvent('nktclearmessagereceived', { detail: msg.msgData }));
+            } catch (e) { }
+        });
+        window.addEventListener('nktincomingdata', function (e) {
+            if (
+                !e.detail.data.msgData
+                || !e.detail.data.msgType
                 || !e.detail.data.msgTo
                 || !e.detail.data.msgFrom
             ) return;
@@ -546,7 +568,7 @@
                 try {
                     var msg = JSON.parse(plaintext);
                     if (msg.msgType !== 'humanMessage') return;
-                    window.dispatchEvent(new CustomEvent('nktmessagereceived', { detail: msg.msgData }));
+                    window.dispatchEvent(new CustomEvent('nktencryptedmessagereceived', { detail: msg.msgData }));
                 } catch (e) { }
             }).catch(err => console.log(err))
         });
@@ -634,6 +656,7 @@
         });
         window.nkt.websocket.on(window.nkt.websocketEventName, handlePingFromWebSocket);
         window.nkt.sendEncryptedMessage = sendEncryptedMessage;
+        window.nkt.sendClearMessage = sendClearMessage;
         setListeners();
         window.nkt.plugin = initPluginManager();
 
