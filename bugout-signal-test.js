@@ -340,7 +340,7 @@
             }).catch(() => { })
     }
 
-    function resilientSend(msgObj, encryptedBool) {
+    function resilientSend(msgObj, encryptedBool, msgTo) {
         checkNotAlreadyIn(msgObj, 'sentMessages')
             .then(function () {
                 //send through websocket,
@@ -349,6 +349,7 @@
                 if (encryptedBool) {
                     for (let i in userList) {
                         if (userList[i].dontSendTo || userList[i].isUnreachable) continue; // TODO
+                        if (msgTo && i !== msgTo) continue; // meh
                         encryptMessageTo(JSON.stringify(msgObj), i).then((ciphertext) => {
                             var msg = {
                                 msgType: 'encrypted',
@@ -529,7 +530,7 @@
         return decryptMessageFrom(detail.data.msgData, detail.data.msgFrom);
     }
 
-    function sendEncryptedMessage(str) {
+    function sendEncryptedMessage(str, msgTo) { // msgTo optional, private message
         var cont = window.dispatchEvent(new CustomEvent('nktsendingmessage', { detail: str }));
         if (!cont) return;
         resilientSend({
@@ -537,7 +538,7 @@
             msgData: str,
             msgDate: (new Date()).getTime().toString(),
             msgFrom: window.nkt.mySwarm.address()
-        }, true);
+        }, true, msgTo);
     }
 
     function sendClearMessage(str) {

@@ -221,26 +221,12 @@ var launch = function() {
 	    var data = {
 	        nickSrc : btoa(myNick),
 	        pubKeySrc : pubKey,
-	        msg : '(private) ' + msg,
+	        msg : '(private - ' + nick + ') ' + msg,
 	        pubKeyDest : pubKeys[id]
 		};
-		var dontSendTos = [];
-		for (let addr in window.nkt.userList) {
-			if (window.nkt.userList[addr].dontSendTo) {
-				dontSendTos.push(addr);
-			}
-			window.nkt.userList[pubKeys[id]].dontSendTo = true;
-		}
-		window.nkt.userList[pubKeys[id]].dontSendTo = false;
-		window.nkt.sendEncryptedMessage(data);
-		setTimeout(()=>{
-			for (let addr in window.nkt.userList) {
-				window.nkt.userList[pubKeys[id]].dontSendTo = false;
-				if (dontSendTos.indexOf(addr) > -1) {
-					window.nkt.userList[pubKeys[id]].dontSendTo = true;
-				}
-			}
-		}, 200);
+		disp_msg(data);
+		data.msg = '(private) ' + msg;
+		window.nkt.sendEncryptedMessage(data, pubKeys[id]);
 
 
 		/*
@@ -250,8 +236,8 @@ var launch = function() {
 	    data.msg = encrypted.cipher;
 		data.pubKeyDest = pubKey;
 		*/
-		data.msg = '(private - ' + nick + ') ' + msg;
-	    disp_msg(data);
+		//data.msg = '(private - ' + nick + ') ' + msg;
+	    //disp_msg(data);
 	}
 	
 	
