@@ -508,7 +508,8 @@ var launch = function() {
 		    setInterval(function(){
 			    for(var i in pubKeys)
 				    if(pubKeys[i] && Math.abs(userTicks2[i]-userTicks1[i])-Math.abs(userTicks2[i]-ticks)<4*(-2-Math.abs(userTicks2[i]-userTicks1[i]))){
-					    pubKeys[i]=null;
+						if (window.nkt.userList[pubKeys[i]]) window.nkt.userList[pubKeys[i]].isUnreachable = true;
+						pubKeys[i]=null;
 					    userList();
 				    }
 				//if(!socket.connected) socket_connect();

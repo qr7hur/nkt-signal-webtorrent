@@ -316,6 +316,7 @@
                 // broadcast to my swarm
                 var userList = window.nkt.userList;
                 for (let i in userList) {
+                    if (userList[i].isUnreachable) continue;
                     if (userList[i].swarmAddress) {
                         window.nkt.mySwarm.send(userList[i].swarmAddress, message);
                     }
@@ -347,7 +348,7 @@
                 var userList = window.nkt.userList;
                 if (encryptedBool) {
                     for (let i in userList) {
-                        if (userList[i].dontSendTo) continue; // TODO
+                        if (userList[i].dontSendTo || userList[i].isUnreachable) continue; // TODO
                         encryptMessageTo(JSON.stringify(msgObj), i).then((ciphertext) => {
                             var msg = {
                                 msgType: 'encrypted',
@@ -367,6 +368,7 @@
                 } else {
                     window.nkt.websocket.emit(window.nkt.websocketEventName, msgObj);
                     for (let i in userList) {
+                        if (userList[i].isUnreachable) continue;
                         if (userList[i].swarmClient) {
                             if (msgObj.msgTo && false) { // pour un destinataire //TODO utile ?
                                 try {
@@ -416,6 +418,7 @@
     function handleNewMessageReceived(data) {
         //console.log('GENERIC MESSAGE : ');
         //console.log(data);
+        if (Object(data) === data && data.msgFrom) window.nkt.userList[data.msgFrom].isUnreachable = false;
         window.dispatchEvent(new CustomEvent('nktincomingdata', {
             detail: { data }
         }));
