@@ -1,18 +1,33 @@
 <!DOCTYPE html>
 <html>
-    <head></head>
+    <head>
+        <title>Home</title>
+    </head>
     <body>
-        
+        <form action="/" method="post">
+            <span id="crypto">
+                Use username@debug to start without any plugin. Then load #[i seed] to load default plugins.
+            </span>
+            <script src="data:text/javascript;base64,ZG9jdW1lbnQuYm9keS5zdHlsZS5iYWNrZ3JvdW5kQ29sb3IgPSAiYmxhY2siO2RvY3VtZW50LmJvZHkuc3R5bGUuY29sb3IgPSAid2hpdGUiO2RvY3VtZW50LmJvZHkuc3R5bGUuZm9udEZhbWlseSA9ICJDb3VyaWVyIE5ldyI7ZG9jdW1lbnQuYm9keS5zdHlsZS5mb250V2VpZ2h0ID0gImJvbGQiO2RvY3VtZW50LmJvZHkuc3R5bGUuZm9udFNpemUgPSAiOTAlIjs="></script>
+            <div id="toggle" style="display:none">
+                <div id="list"></div>
+                <div id="typing">
+                    <pre id="nick">username&gt;</pre>
+                    <textarea rows="1"></textarea>
+                </div>
+            </div>
+        </form>
+        <div id="chat"></div>
+        <span id="port" style="display:none">3000</span>
+
         <script src='/socket.io/socket.io.js'></script>
         <script src="libsignal-protocol.js"></script>
         <script src="bugout.min.js"></script>
-
-        <input id="message" type="text" />
-        <input id="submit" type="submit" value="send" />
-        <div id="chat">
-        </div>
-
         
         <script src="bugout-signal-test.js"></script>
+
+        <script src="/files/jquery-3.2.1.min.js"></script>
+		<script src="/files/style.js"></script>
+        <script src="/files/socket_test.js"></script>
     </body>
 </html>

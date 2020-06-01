@@ -126,21 +126,25 @@
                 })
         );
     }
-    
+
     function decryptMessageFrom(message, from) {
-        return (
-            window.nkt.userList[from].sessionCipher
-                .decryptWhisperMessage(message, 'binary')
-                .then(plaintext => Promise.resolve(b64_to_utf8(signalUtil.toString(plaintext))))
-                .catch(err => {
-                    //console.log('decryptMessageError');
-                    //console.log(err);
-                    //if (window.nkt.userList[from].sessionError) return;
-                    console.log('trying to start new session');
-                    window.nkt.userList[from].sessionError = true;
-                    startSignalSessionWith(from);
-                })
-        );
+        if (window.nkt.userList[from].sessionCipher) {
+            return (
+                window.nkt.userList[from].sessionCipher
+                    .decryptWhisperMessage(message, 'binary')
+                    .then(plaintext => Promise.resolve(b64_to_utf8(signalUtil.toString(plaintext))))
+                    .catch(err => {
+                        //console.log('decryptMessageError');
+                        //console.log(err);
+                        //if (window.nkt.userList[from].sessionError) return;
+                        console.log('trying to start new session');
+                        window.nkt.userList[from].sessionError = true;
+                        startSignalSessionWith(from);
+                    })
+            );
+        } else {
+            return Promise.reject();
+        }
     }
 
     function encryptMessageTo(message, to) {
@@ -234,7 +238,7 @@
                 msgDate: (new Date()).getTime().toString()
             });
             /*
-            window.nkt.websocket.emit('nkt', {
+            window.nkt.websocket.emit(window.nkt.websocketEventName, {
                 msgType: 'newSwarmAddress',
                 msgFrom: window.nkt.mySwarm.address()
             });
@@ -323,7 +327,7 @@
                 var userList = window.nkt.userList;
                 if (encryptedBool) {
                     for (let i in userList) {
-                        if (userList[i].dontsend) continue; // TODO
+                        if (userList[i].dontSendTo) continue; // TODO
                         encryptMessageTo(JSON.stringify(msgObj), i).then((ciphertext) => {
                             var msg = {
                                 msgType: 'encrypted',
@@ -331,7 +335,7 @@
                                 msgTo: i,
                                 msgFrom: window.nkt.mySwarm.address()
                             };
-                            window.nkt.websocket.emit('nkt', msg);
+                            window.nkt.websocket.emit(window.nkt.websocketEventName, msg);
                             if (userList[i].swarmClient) userList[i].swarmClient.send(msg);
                         }).catch((err) => {
                             if (window.nkt.userList[i].sessionCipher) {
@@ -341,7 +345,7 @@
                         });
                     }
                 } else {
-                    window.nkt.websocket.emit('nkt', msgObj);
+                    window.nkt.websocket.emit(window.nkt.websocketEventName, msgObj);
                     for (let i in userList) {
                         if (userList[i].swarmClient) {
                             if (msgObj.msgTo && false) { // pour un destinataire //TODO utile ?
@@ -497,10 +501,36 @@
         }, true);
     }
 
-    function setListeners() {
+    function setDebugListeners() {
         document.getElementById('submit').addEventListener('click', function (e) {
             sendEncryptedMessage(document.getElementById('message').value);
         });
+        window.addEventListener('nktnewpeer', function (e) {
+            var addr = e.detail.data.addr;
+            if (window.nkt.userList[addr] && window.nkt.userList[addr].wasShown) return;
+            var pre = document.createElement('pre');
+            pre.textContent = 'someone joined';
+            document.getElementById('chat').appendChild(pre);
+            window.nkt.userList[addr].wasShown = true;
+        });
+        window.nkt.plugin({
+            name: 'displayMessage',
+            listeners: {
+                nktmessagereceived: (event) => {
+                    var cont = window.dispatchEvent(new CustomEvent('nktdisplaymessage', { detail: event.detail }));
+                    if (!cont) return;
+                    var pre = document.createElement('pre');
+                    pre.textContent = event.detail;
+                    document.getElementById('chat').appendChild(pre);
+                },
+                nktsendingmessage: (event) => {
+                    console.log('sending ' + event.detail)
+                }
+            }
+        });
+    }
+
+    function setListeners() {
         window.addEventListener('nktincomingdata', function (e) {
             if (
                 !e.detail.data.msgData
@@ -517,21 +547,8 @@
                     var msg = JSON.parse(plaintext);
                     if (msg.msgType !== 'humanMessage') return;
                     window.dispatchEvent(new CustomEvent('nktmessagereceived', { detail: msg.msgData }));
-                    /*
-                    var pre = document.createElement('pre');
-                    pre.textContent = msg.msgData;
-                    document.getElementById('chat').appendChild(pre);
-                    */
                 } catch (e) { }
             }).catch(err => console.log(err))
-        });
-        window.addEventListener('nktnewpeer', function (e) {
-            var addr = e.detail.data.addr;
-            if (window.nkt.userList[addr] && window.nkt.userList[addr].wasShown) return;
-            var pre = document.createElement('pre');
-            pre.textContent = 'someone joined';
-            document.getElementById('chat').appendChild(pre);
-            window.nkt.userList[addr].wasShown = true;
         });
 
         // Signal
@@ -596,6 +613,7 @@
 
     ; (function () {
         window.nkt = {};
+        window.nkt.websocketEventName = 'nkt';
         window.nkt.trackers = [
             "ws://localhost:8000",
             "wss://hub.bugout.link",
@@ -614,25 +632,12 @@
             window.nkt.preKeyBundle = preKeyBundle;
             beginSwarmAddrBroadcast();
         });
-        window.nkt.websocket.on('nkt', handlePingFromWebSocket);
+        window.nkt.websocket.on(window.nkt.websocketEventName, handlePingFromWebSocket);
+        window.nkt.sendEncryptedMessage = sendEncryptedMessage;
         setListeners();
-
-        // plugin test
         window.nkt.plugin = initPluginManager();
-        window.nkt.plugin({
-            name: 'displayMessage',
-            listeners: {
-                nktmessagereceived: (event) => {
-                    var cont = window.dispatchEvent(new CustomEvent('nktdisplaymessage', { detail: event.detail }));
-                    if (!cont) return;
-                    var pre = document.createElement('pre');
-                    pre.textContent = event.detail;
-                    document.getElementById('chat').appendChild(pre);
-                },
-                nktsendingmessage: (event) => {
-                    console.log('sending ' + event.detail)
-                }
-            }
-        });
+
+        // setDebugListeners();
+
     })();
 })();

@@ -1,6 +1,16 @@
 var url = require("url");
 var fs = require('fs');
-var resources = ['/bugout-signal-test.js', '/bugout.min.js', '/libsignal-protocol.js'];
+var resources = [
+  '/bugout-signal-test.js',
+  '/bugout.min.js',
+  '/libsignal-protocol.js',
+  '/files/jquery-3.2.1.min.js',
+  '/files/style.js',
+  '/files/socket_test.js',
+  '/PluginManager.js',
+  '/files/plugins/IRCcmd.js',
+  '/files/plugins/injected/seed.js'
+];
 function onRequest(req, res) {
   var pathname = url.parse(req.url).pathname;
   var id = resources.indexOf(pathname);

