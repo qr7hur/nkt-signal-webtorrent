@@ -21,7 +21,8 @@ node app.js
 
 # High level apis (TODO better) :
 # - window.nkt.sendEncryptedMessage() to send high level message (for human or bot)
-# - window.nkt.userList (not so high level, but hey)
+# - window.nkt.userList (not so high level ... each user has a unique addr and a window.nkt.userList[addr].dontSendTo flag)
+# - local (self) addr is window.nkt.mySwarm.address()
 # - events with misleading names like 'nktnewpeer' (may fire several times), 'nktincomingdata', 'nktoutgoingdata' 
 # - better events : nktmessagereceived, nktsendingmessage ... plugin can define events too, like nktdisplaymessage
 ```
