@@ -31,27 +31,21 @@ node app.js
 # - better events : nktencryptedmessagereceived, nktclearmessagereceived, nktsendingmessage
 # - nktwebrtcseen, nktwebrtcleft
 # -- ... plugin can define events too, like nktdisplaymessage
-# - window.nkt.startWebRTCClient to be able to manually joint a swarm
 ```
 
 ## Concept
 
-- 1 nkt browser tab = 1 peer = 1 webtorrent/webrtc "server" (bugout)
--- EDIT : nope, use SINGLE SWARM IDENTIFIER FOR ALL PEERS
-- when available, peers advertise themselves through app.js websocket
+- 1 nkt browser tab = 1 peer (webtorrent = bittorrent over webrtc)
+- when available, peers use app.js websocket for sig and data
 - peers also announce themselves on various webtorrent trackers
 - app.js should be as lightweight as possible (no express, pg ...)
-- [TODO] manual connection /connect [peerAddr-as-listed-on-trackers] (calling window.nkt.startWebRTCClient)
-- each peer has a swarm of known users, there is 1 swarm per user
--- EDIT : nope, use SINGLE SWARM IDENTIFIER FOR ALL PEERS
-- some peers in the swarm are reachable webrtc peers (joinable on websocket server unreachable)
-- messages are sent through webrtc and websocket and deduplicated
-- when a peer is added to the swarm, a signal session is established for secure messaging (libsignal)
-- swarms try to maximize reach by propagating to their swarm (1) signal public keys and (2) known peer addresses
-- [TODO] besides signalisation, swarms could also forward content (encrypted messages) to bridge isolated peers
+- each peer belongs to the nkt swarm of known users
+- some peers in the swarm are reachable webrtc peers (joinable when websocket data is unreachable)
+- all messages are sent through webrtc and websocket and deduplicated
+- when a peer is added to the swarm, a signal session is established with it for secure messaging (libsignal)
 - websocket, webrtc and signal connection/session establishment should be resilient to poor network
-- PRE-PRE-ALPHA VERY SLOW AND BUGGY TOUCH WITH A STICK ONLY, browser entrypoint is `bugout-signal-test.js`
-- MERGE WITH NKT IN PROGRESS
+- browser entrypoint is `bugout-signal-test.js`
+- interface with nkt by providing a dedicated socket_test.js wrapper
 
 ## Acknowledgements
 
