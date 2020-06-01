@@ -181,7 +181,16 @@
         b.on('message', function (address, message) {
             handleMessageFromSwarm(address, message);
         });
-        b.on('seen', (addr)=>{console.log('RTC SEEN');console.log(addr);});
+        b.on('seen', (addr)=>{
+            console.log('RTC SEEN');
+            console.log(addr);
+            window.dispatchEvent(new CustomEvent('nktwebrtcseen', { detail: addr }));
+        });
+        b.on('left', (addr)=>{
+            console.log('RTC LEFT');
+            console.log(addr);
+            window.dispatchEvent(new CustomEvent('nktwebrtcleft', { detail: addr }));
+        });
         return b;
     }
 
@@ -323,7 +332,7 @@
             .then(function () {
                 // broadcast to my swarm
                 var userList = window.nkt.userList;
-                if (window.nkt.singleSwarmID) window.nkt.mySwarm.send(message);
+                if (window.nkt.singleSwarmID && false) window.nkt.mySwarm.send(message); // maybe unnecessary, avoid double sending
                 for (let i in userList) {
                     if (userList[i].isUnreachable) continue;
                     if (userList[i].swarmAddress && !window.nkt.singleSwarmID) {
@@ -408,6 +417,8 @@
     function checkNotAlreadyIn(msgObj, arrayName) {
         return hashMessageObject(msgObj).then(function (hashBuffer) {
             var str = toHexString(new Uint8Array(hashBuffer));
+            //console.log('checking not already in')
+            //console.log(str);
             if (window.nkt[arrayName].indexOf(str) === -1) {
                 addToMessageArray(str, arrayName);
                 return Promise.resolve();
