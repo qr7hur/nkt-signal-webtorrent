@@ -29,15 +29,17 @@ node app.js
 
 ## Concept
 
-- 1 nkt browser tab = 1 peer
+- 1 nkt browser tab = 1 peer = 1 webtorrent/webrtc "server" (bugout)
 - when available, peers advertise themselves through app.js websocket
-- app.js be the lightest (no express)
+- peers also announce themselves on various webtorrent trackers
+- app.js should be as lightweight as possible (no express, pg ...)
 - [TODO] manual connection /connect [peerAddr-as-listed-on-trackers]
 - each peer has a swarm of known users, there is 1 swarm per user
 - some peers in the swarm are reachable webrtc peers (joinable on websocket server unreachable)
-- messages are send through webrtc and websocket and deduplicated
-- when a peer is added to the swarm, a signal session is established for secure messaging
+- messages are sent through webrtc and websocket and deduplicated
+- when a peer is added to the swarm, a signal session is established for secure messaging (libsignal)
 - swarms try to maximize reach by propagating to their swarm (1) signal public keys and (2) known peer addresses
+- [TODO] besides signalisation, swarms could also forward content (encrypted messages) to bridge isolated peers
 - websocket, webrtc and signal connection/session establishment should be resilient to poor network
 - PRE-PRE-ALPHA VERY SLOW AND BUGGY TOUCH WITH A STICK ONLY, browser entrypoint is `bugout-signal-test.js`
 - MERGE WITH NKT IN PROGRESS
