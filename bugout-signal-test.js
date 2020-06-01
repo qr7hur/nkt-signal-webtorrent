@@ -761,6 +761,7 @@
         window.nkt.websocket.on(window.nkt.websocketEventName, handlePingFromWebSocket);
         window.nkt.sendEncryptedMessage = sendEncryptedMessage;
         window.nkt.sendClearMessage = sendClearMessage;
+        window.nkt.startWebRTCClient = startWebRTCClient; // for manual join without websocket
         setListeners();
         window.nkt.plugin = initPluginManager();
 

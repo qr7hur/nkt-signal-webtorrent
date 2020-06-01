@@ -25,6 +25,7 @@ node app.js
 # - local (self) addr is window.nkt.mySwarm.address()
 # - events with misleading names like 'nktnewpeer' (may fire several times), 'nktincomingdata', 'nktoutgoingdata' 
 # - better events : nktencryptedmessagereceived, nktclearmessagereceived, nktsendingmessage ... plugin can define events too, like nktdisplaymessage
+# - window.nkt.startWebRTCClient to be able to manually joint a swarm
 ```
 
 ## Concept
@@ -33,7 +34,7 @@ node app.js
 - when available, peers advertise themselves through app.js websocket
 - peers also announce themselves on various webtorrent trackers
 - app.js should be as lightweight as possible (no express, pg ...)
-- [TODO] manual connection /connect [peerAddr-as-listed-on-trackers]
+- [TODO] manual connection /connect [peerAddr-as-listed-on-trackers] (calling window.nkt.startWebRTCClient)
 - each peer has a swarm of known users, there is 1 swarm per user
 - some peers in the swarm are reachable webrtc peers (joinable on websocket server unreachable)
 - messages are sent through webrtc and websocket and deduplicated
