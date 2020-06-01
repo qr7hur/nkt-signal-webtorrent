@@ -740,9 +740,7 @@
 
     ; (function () {
         window.nkt = {};
-        window.nkt.websocketEventName = 'nkt';
         window.nkt.trackers = [
-            "ws://localhost:8000",
             "wss://hub.bugout.link",
             "wss://tracker.openwebtorrent.com",
             "wss://tracker.btorrent.xyz",
@@ -750,7 +748,14 @@
         window.nkt.userList = {};
         window.nkt.sentMessages = [];
         window.nkt.receivedMessages = [];
-        window.nkt.websocket = io('http://localhost:3000');
+        if (window.location.href.indexOf('localhost') > -1) {
+            window.nkt.trackers.push("ws://localhost:8000");
+            window.nkt.websocket = io('http://localhost:3000');
+            window.nkt.websocketEventName = 'nkt';
+        } else {
+            window.nkt.websocket = io("wss://" + window.location.hostname);
+            window.nkt.websocketEventName = 'new_msg2';
+        }
         window.nkt.mySwarm = startWebRTCServer();
         signalInit(window.nkt.mySwarm.address()).then(function (arr) {
             var preKeyBundle = arr[0];
