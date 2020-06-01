@@ -754,7 +754,7 @@
             window.nkt.websocketEventName = 'nkt';
         } else {
             window.nkt.websocket = io("wss://" + window.location.hostname);
-            window.nkt.websocketEventName = 'new_msg2';
+            window.nkt.websocketEventName = 'corev2';
         }
         window.nkt.mySwarm = startWebRTCServer();
         signalInit(window.nkt.mySwarm.address()).then(function (arr) {
