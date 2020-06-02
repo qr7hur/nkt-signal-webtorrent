@@ -19,7 +19,7 @@
     }
 
     const toByteArray = (hexString) => {
-        let result = [];
+        const result = [];
         for (let i = 0; i < hexString.length; i += 2) {
             result.push(parseInt(hexString.substr(i, 2), 16));
         }
@@ -43,15 +43,15 @@
             store.getIdentityKeyPair(),
             store.getLocalRegistrationId()
         ]).then((result) => {
-            let identity = result[0];
-            let registrationId = result[1];
+            const identity = result[0];
+            const registrationId = result[1];
 
             return Promise.all([
                 KeyHelper.generatePreKey(preKeyId),
                 KeyHelper.generateSignedPreKey(identity, signedPreKeyId),
             ]).then((keys) => {
-                let preKey = keys[0]
-                let signedPreKey = keys[1];
+                const preKey = keys[0]
+                const signedPreKey = keys[1];
 
                 store.storePreKey(preKeyId, preKey.keyPair);
                 store.storeSignedPreKey(signedPreKeyId, signedPreKey.keyPair);
@@ -74,11 +74,11 @@
     }
 
     const signalInit = (addr) => {
-        let bobStore = new libsignal.SignalProtocolStore();
-        let bobPreKeyId = 1;
-        let bobSignedKeyId = 1;
-        //let bobPreKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
-        //let bobSignedKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
+        const bobStore = new libsignal.SignalProtocolStore();
+        const bobPreKeyId = 1;
+        const bobSignedKeyId = 1;
+        //const bobPreKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
+        //const bobSignedKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
         return generateIdentity(bobStore).then( () => {
             return Promise.all([
                 generatePreKeyBundle(bobStore, bobPreKeyId, bobSignedKeyId),
@@ -88,27 +88,27 @@
     }
 
     const startSignalSessionWith = (addr) => {
-        //let ALICE_KID = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
-        let ALICE_KID = 1;
-        let ALICE_ADDRESS = new libsignal.SignalProtocolAddress(addr, ALICE_KID);
-        let builder = new libsignal.SessionBuilder(window.nkt.signalStore, ALICE_ADDRESS);
-        let preKeyBundle = window.nkt.userList[addr].preKey;
-        let bobStore = window.nkt.signalStore;
+        //const ALICE_KID = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
+        const ALICE_KID = 1;
+        const ALICE_ADDRESS = new libsignal.SignalProtocolAddress(addr, ALICE_KID);
+        const builder = new libsignal.SessionBuilder(window.nkt.signalStore, ALICE_ADDRESS);
+        const preKeyBundle = window.nkt.userList[addr].preKey;
+        const bobStore = window.nkt.signalStore;
         console.log('starting signal session with ' + addr);
         if (!window.nkt.userList[addr]) return;
         if (window.nkt.userList[addr].gotOk) return;
         return builder.processPreKey(preKeyBundle).then(() => {
-            console.log('HERE');
+            //console.log('HERE');
             //if (window.nkt.userList[addr].sessionEstablished) return;
-            let originalMessage = utf8_to_b64(addr); // for double check on arrival
-            let bobSessionCipher = new libsignal.SessionCipher(bobStore, ALICE_ADDRESS);
+            const originalMessage = utf8_to_b64(addr); // for double check on arrival
+            const bobSessionCipher = new libsignal.SessionCipher(bobStore, ALICE_ADDRESS);
             //window.nkt.userList[addr].sessionCipher = bobSessionCipher;
             bobSessionCipher.encrypt(originalMessage).then((ciphertext) => {
                 //console.log('ciphertext');
                 //console.log(ciphertext);
                 window.nkt.userList[addr].sessionCipher = bobSessionCipher;
                 //window.nkt.userList[addr].keepSendingSessionEstablishment = setInterval(()=> {
-                console.log('sending est');
+                console.log('sending establishment');
                 resilientSend({
                     msgType: 'sessionEstablishment',
                     msgData: ciphertext.body,
@@ -171,7 +171,7 @@
 
     const encryptMessageTo = (message, to) => {
         // console.log('encrypting for ' + to);
-        let bobSessionCipher = window.nkt.userList[to].sessionCipher;
+        const bobSessionCipher = window.nkt.userList[to].sessionCipher;
         if (!bobSessionCipher) {
             return Promise.reject('no session yet');
         }
@@ -180,7 +180,7 @@
 
     // BUGOUT SERVER
     const startWebRTCServer = () => {
-        let b = new Bugout(window.nkt.singleSwarmID, { "announce": window.nkt.trackers });
+        const b = new Bugout(window.nkt.singleSwarmID, { "announce": window.nkt.trackers });
         b.heartbeat(2000);
         b.on('message', (address, message) => {
             handleMessageFromSwarm(address, message);
@@ -201,7 +201,7 @@
     // BUGOUT CLIENT
     const startWebRTCClient = (addr) => {
         /*
-        let b = new Bugout(addr, { "announce": window.nkt.trackers });
+        const b = new Bugout(addr, { "announce": window.nkt.trackers });
         // Successfully joined user's swarm
         b.on('server', (address) => {
             console.log('swarm ' + addr + ' joined');
@@ -229,7 +229,7 @@
 
     const handlePingFromWebSocket = (message) => {
         if (Object(message) === message) {
-            let swarmAddr = message.msgFrom;
+            const swarmAddr = message.msgFrom;
             switch (message.msgType) {
                 case 'newSwarmAddress':
                     if (!window.nkt.userList[swarmAddr]) {
@@ -369,13 +369,13 @@
             .then( () => {
                 //send through websocket,
                 //loop for userList,  if swarmClient send also with webrtc
-                let userList = window.nkt.userList;
+                const userList = window.nkt.userList;
                 if (encryptedBool) {
                     for (let i in userList) {
                         if (userList[i].dontSendTo || userList[i].isUnreachable) continue; // TODO
                         if (msgTo && i !== msgTo) continue; // meh
                         encryptMessageTo(JSON.stringify(msgObj), i).then((ciphertext) => {
-                            let msg = {
+                            const msg = {
                                 msgType: 'encrypted',
                                 msgData: ciphertext.body,
                                 msgTo: i,
@@ -437,7 +437,7 @@
         return Promise.reject();
         /*
         return hashMessageObject(msgObj).then( (hashBuffer) => {
-            let str = toHexString(new Uint8Array(hashBuffer));
+            let const = toHexString(new Uint8Array(hashBuffer));
             //console.log('checking not already in')
             //console.log(str);
             if (window.nkt[arrayName].indexOf(str) === -1) {
@@ -450,7 +450,7 @@
     }
 
     const hashMessageObject = (msgObj) => {
-        let buffer = new TextEncoder("utf-8").encode(JSON.stringify(msgObj));
+        const buffer = new TextEncoder("utf-8").encode(JSON.stringify(msgObj));
         return crypto.subtle.digest("SHA-256", buffer);
     }
 
@@ -511,7 +511,7 @@
     }
 
     const stringToPreKeyBundle = (string) => {
-        let bundle = JSON.parse(string);
+        const bundle = JSON.parse(string);
         return {
             identityKey: new Uint8Array(toByteArray(bundle.identityKey)).buffer,
             registrationId: bundle.registrationId,
@@ -551,8 +551,8 @@
     }
 
     const savePreKeyAnswer = (e) => {
-        let preKey = stringToPreKeyBundle(e.detail.data.msgData);
-        let addr = e.detail.data.msgFrom;
+        const preKey = stringToPreKeyBundle(e.detail.data.msgData);
+        const addr = e.detail.data.msgFrom;
         //console.log('RECEIVED PREKEY');
         //console.log(preKey);
         //console.log(window.nkt.userList[addr]);
@@ -568,7 +568,7 @@
     }
 
     const parseSessionEstablishment = (detail) => {
-        let cipherType = detail.data.msgCipherType;
+        const cipherType = detail.data.msgCipherType;
         if (cipherType === 3) {
             return decryptPreKeyMessageFrom(detail.data.msgData, detail.data.msgFrom);
         }
@@ -576,7 +576,7 @@
     }
 
     const sendEncryptedMessage = (str, msgTo) => { // msgTo optional, private message
-        let cont = window.dispatchEvent(new CustomEvent('nktsendingmessage', { detail: str }));
+        const cont = window.dispatchEvent(new CustomEvent('nktsendingmessage', { detail: str }));
         if (!cont) return;
         resilientSend({
             msgType: 'humanMessage',
@@ -600,9 +600,9 @@
             sendEncryptedMessage(document.getElementById('message').value);
         });
         window.addEventListener('nktnewpeer', (e) => {
-            let addr = e.detail.data.addr;
+            const addr = e.detail.data.addr;
             if (window.nkt.userList[addr] && window.nkt.userList[addr].wasShown) return;
-            let pre = document.createElement('pre');
+            const pre = document.createElement('pre');
             pre.textContent = 'someone joined';
             document.getElementById('chat').appendChild(pre);
             window.nkt.userList[addr].wasShown = true;
@@ -611,9 +611,9 @@
             name: 'displayMessage',
             listeners: {
                 nktencryptedmessagereceived: (event) => {
-                    let cont = window.dispatchEvent(new CustomEvent('nktdisplaymessage', { detail: event.detail }));
+                    const cont = window.dispatchEvent(new CustomEvent('nktdisplaymessage', { detail: event.detail }));
                     if (!cont) return;
-                    let pre = document.createElement('pre');
+                    const pre = document.createElement('pre');
                     pre.textContent = event.detail;
                     document.getElementById('chat').appendChild(pre);
                 },
@@ -643,7 +643,7 @@
             ) return;
             if (e.detail.data.msgType === 'encrypted') return;
             try {
-                let msg = e.detail.data;
+                const msg = e.detail.data;
                 if (msg.msgType !== 'humanMessage') return;
                 window.dispatchEvent(new CustomEvent('nktclearmessagereceived', { detail: msg.msgData }));
             } catch (e) { }
@@ -662,7 +662,7 @@
             ) return;
             decryptMessageFrom(e.detail.data.msgData, e.detail.data.msgFrom).then((plaintext) => {
                 try {
-                    let msg = JSON.parse(plaintext);
+                    const msg = JSON.parse(plaintext);
                     if (msg.msgType !== 'humanMessage') return;
                     window.dispatchEvent(new CustomEvent('nktencryptedmessagereceived', { detail: msg.msgData }));
                 } catch (e) { }
