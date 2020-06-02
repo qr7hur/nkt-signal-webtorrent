@@ -19,8 +19,8 @@
     }
 
     const toByteArray = (hexString) => {
-        var result = [];
-        for (var i = 0; i < hexString.length; i += 2) {
+        let result = [];
+        for (let i = 0; i < hexString.length; i += 2) {
             result.push(parseInt(hexString.substr(i, 2), 16));
         }
         return result;
@@ -43,15 +43,15 @@
             store.getIdentityKeyPair(),
             store.getLocalRegistrationId()
         ]).then((result) => {
-            var identity = result[0];
-            var registrationId = result[1];
+            let identity = result[0];
+            let registrationId = result[1];
 
             return Promise.all([
                 KeyHelper.generatePreKey(preKeyId),
                 KeyHelper.generateSignedPreKey(identity, signedPreKeyId),
             ]).then((keys) => {
-                var preKey = keys[0]
-                var signedPreKey = keys[1];
+                let preKey = keys[0]
+                let signedPreKey = keys[1];
 
                 store.storePreKey(preKeyId, preKey.keyPair);
                 store.storeSignedPreKey(signedPreKeyId, signedPreKey.keyPair);
@@ -74,11 +74,11 @@
     }
 
     const signalInit = (addr) => {
-        var bobStore = new libsignal.SignalProtocolStore();
-        var bobPreKeyId = 1;
-        var bobSignedKeyId = 1;
-        //var bobPreKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
-        //var bobSignedKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
+        let bobStore = new libsignal.SignalProtocolStore();
+        let bobPreKeyId = 1;
+        let bobSignedKeyId = 1;
+        //let bobPreKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
+        //let bobSignedKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
         return generateIdentity(bobStore).then( () => {
             return Promise.all([
                 generatePreKeyBundle(bobStore, bobPreKeyId, bobSignedKeyId),
@@ -88,20 +88,20 @@
     }
 
     const startSignalSessionWith = (addr) => {
-        //var ALICE_KID = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
-        var ALICE_KID = 1;
-        var ALICE_ADDRESS = new libsignal.SignalProtocolAddress(addr, ALICE_KID);
-        var builder = new libsignal.SessionBuilder(window.nkt.signalStore, ALICE_ADDRESS);
-        var preKeyBundle = window.nkt.userList[addr].preKey;
-        var bobStore = window.nkt.signalStore;
+        //let ALICE_KID = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
+        let ALICE_KID = 1;
+        let ALICE_ADDRESS = new libsignal.SignalProtocolAddress(addr, ALICE_KID);
+        let builder = new libsignal.SessionBuilder(window.nkt.signalStore, ALICE_ADDRESS);
+        let preKeyBundle = window.nkt.userList[addr].preKey;
+        let bobStore = window.nkt.signalStore;
         console.log('starting signal session with ' + addr);
         if (!window.nkt.userList[addr]) return;
         if (window.nkt.userList[addr].gotOk) return;
         return builder.processPreKey(preKeyBundle).then(() => {
             console.log('HERE');
             //if (window.nkt.userList[addr].sessionEstablished) return;
-            var originalMessage = utf8_to_b64(addr); // for double check on arrival
-            var bobSessionCipher = new libsignal.SessionCipher(bobStore, ALICE_ADDRESS);
+            let originalMessage = utf8_to_b64(addr); // for double check on arrival
+            let bobSessionCipher = new libsignal.SessionCipher(bobStore, ALICE_ADDRESS);
             //window.nkt.userList[addr].sessionCipher = bobSessionCipher;
             bobSessionCipher.encrypt(originalMessage).then((ciphertext) => {
                 //console.log('ciphertext');
@@ -171,7 +171,7 @@
 
     const encryptMessageTo = (message, to) => {
         // console.log('encrypting for ' + to);
-        var bobSessionCipher = window.nkt.userList[to].sessionCipher;
+        let bobSessionCipher = window.nkt.userList[to].sessionCipher;
         if (!bobSessionCipher) {
             return Promise.reject('no session yet');
         }
@@ -180,7 +180,7 @@
 
     // BUGOUT SERVER
     const startWebRTCServer = () => {
-        var b = new Bugout(window.nkt.singleSwarmID, { "announce": window.nkt.trackers });
+        let b = new Bugout(window.nkt.singleSwarmID, { "announce": window.nkt.trackers });
         b.heartbeat(2000);
         b.on('message', (address, message) => {
             handleMessageFromSwarm(address, message);
@@ -201,7 +201,7 @@
     // BUGOUT CLIENT
     const startWebRTCClient = (addr) => {
         /*
-        var b = new Bugout(addr, { "announce": window.nkt.trackers });
+        let b = new Bugout(addr, { "announce": window.nkt.trackers });
         // Successfully joined user's swarm
         b.on('server', (address) => {
             console.log('swarm ' + addr + ' joined');
@@ -229,15 +229,14 @@
 
     const handlePingFromWebSocket = (message) => {
         if (Object(message) === message) {
+            let swarmAddr = message.msgFrom;
             switch (message.msgType) {
                 case 'newSwarmAddress':
-                    var swarmAddr = message.msgFrom;
                     if (!window.nkt.userList[swarmAddr]) {
                         handleUnknownSwarmAddress(swarmAddr);
                     }
                     break;
                 default:
-                    var swarmAddr = message.msgFrom;
                     if (!window.nkt.userList[swarmAddr]) {
                         handleUnknownSwarmAddress(swarmAddr);
                     }
@@ -335,7 +334,7 @@
         checkNotAlreadyIn(message, 'sentMessages')
             .then( () => {
                 // broadcast to my swarm
-                var userList = window.nkt.userList;
+                let userList = window.nkt.userList;
                 if (window.nkt.singleSwarmID && false) window.nkt.mySwarm.send(message); // maybe unnecessary, avoid double sending
                 for (let i in userList) {
                     if (userList[i].isUnreachable) continue;
@@ -370,13 +369,13 @@
             .then( () => {
                 //send through websocket,
                 //loop for userList,  if swarmClient send also with webrtc
-                var userList = window.nkt.userList;
+                let userList = window.nkt.userList;
                 if (encryptedBool) {
                     for (let i in userList) {
                         if (userList[i].dontSendTo || userList[i].isUnreachable) continue; // TODO
                         if (msgTo && i !== msgTo) continue; // meh
                         encryptMessageTo(JSON.stringify(msgObj), i).then((ciphertext) => {
-                            var msg = {
+                            let msg = {
                                 msgType: 'encrypted',
                                 msgData: ciphertext.body,
                                 msgTo: i,
@@ -438,7 +437,7 @@
         return Promise.reject();
         /*
         return hashMessageObject(msgObj).then( (hashBuffer) => {
-            var str = toHexString(new Uint8Array(hashBuffer));
+            let str = toHexString(new Uint8Array(hashBuffer));
             //console.log('checking not already in')
             //console.log(str);
             if (window.nkt[arrayName].indexOf(str) === -1) {
@@ -451,7 +450,7 @@
     }
 
     const hashMessageObject = (msgObj) => {
-        var buffer = new TextEncoder("utf-8").encode(JSON.stringify(msgObj));
+        let buffer = new TextEncoder("utf-8").encode(JSON.stringify(msgObj));
         return crypto.subtle.digest("SHA-256", buffer);
     }
 
@@ -512,7 +511,7 @@
     }
 
     const stringToPreKeyBundle = (string) => {
-        var bundle = JSON.parse(string);
+        let bundle = JSON.parse(string);
         return {
             identityKey: new Uint8Array(toByteArray(bundle.identityKey)).buffer,
             registrationId: bundle.registrationId,
@@ -552,8 +551,8 @@
     }
 
     const savePreKeyAnswer = (e) => {
-        var preKey = stringToPreKeyBundle(e.detail.data.msgData);
-        var addr = e.detail.data.msgFrom;
+        let preKey = stringToPreKeyBundle(e.detail.data.msgData);
+        let addr = e.detail.data.msgFrom;
         //console.log('RECEIVED PREKEY');
         //console.log(preKey);
         //console.log(window.nkt.userList[addr]);
@@ -569,7 +568,7 @@
     }
 
     const parseSessionEstablishment = (detail) => {
-        var cipherType = detail.data.msgCipherType;
+        let cipherType = detail.data.msgCipherType;
         if (cipherType === 3) {
             return decryptPreKeyMessageFrom(detail.data.msgData, detail.data.msgFrom);
         }
@@ -577,7 +576,7 @@
     }
 
     const sendEncryptedMessage = (str, msgTo) => { // msgTo optional, private message
-        var cont = window.dispatchEvent(new CustomEvent('nktsendingmessage', { detail: str }));
+        let cont = window.dispatchEvent(new CustomEvent('nktsendingmessage', { detail: str }));
         if (!cont) return;
         resilientSend({
             msgType: 'humanMessage',
@@ -601,9 +600,9 @@
             sendEncryptedMessage(document.getElementById('message').value);
         });
         window.addEventListener('nktnewpeer', (e) => {
-            var addr = e.detail.data.addr;
+            let addr = e.detail.data.addr;
             if (window.nkt.userList[addr] && window.nkt.userList[addr].wasShown) return;
-            var pre = document.createElement('pre');
+            let pre = document.createElement('pre');
             pre.textContent = 'someone joined';
             document.getElementById('chat').appendChild(pre);
             window.nkt.userList[addr].wasShown = true;
@@ -612,9 +611,9 @@
             name: 'displayMessage',
             listeners: {
                 nktencryptedmessagereceived: (event) => {
-                    var cont = window.dispatchEvent(new CustomEvent('nktdisplaymessage', { detail: event.detail }));
+                    let cont = window.dispatchEvent(new CustomEvent('nktdisplaymessage', { detail: event.detail }));
                     if (!cont) return;
-                    var pre = document.createElement('pre');
+                    let pre = document.createElement('pre');
                     pre.textContent = event.detail;
                     document.getElementById('chat').appendChild(pre);
                 },
@@ -644,7 +643,7 @@
             ) return;
             if (e.detail.data.msgType === 'encrypted') return;
             try {
-                var msg = e.detail.data;
+                let msg = e.detail.data;
                 if (msg.msgType !== 'humanMessage') return;
                 window.dispatchEvent(new CustomEvent('nktclearmessagereceived', { detail: msg.msgData }));
             } catch (e) { }
@@ -663,7 +662,7 @@
             ) return;
             decryptMessageFrom(e.detail.data.msgData, e.detail.data.msgFrom).then((plaintext) => {
                 try {
-                    var msg = JSON.parse(plaintext);
+                    let msg = JSON.parse(plaintext);
                     if (msg.msgType !== 'humanMessage') return;
                     window.dispatchEvent(new CustomEvent('nktencryptedmessagereceived', { detail: msg.msgData }));
                 } catch (e) { }
@@ -806,8 +805,8 @@
         }
         window.nkt.mySwarm = startWebRTCServer();
         signalInit(window.nkt.mySwarm.address()).then((arr) => {
-            var preKeyBundle = arr[0];
-            var store = arr[1];
+            let preKeyBundle = arr[0];
+            let store = arr[1];
             window.nkt.signalStore = store;
             window.nkt.preKeyBundle = preKeyBundle;
             beginSwarmAddrBroadcast();
