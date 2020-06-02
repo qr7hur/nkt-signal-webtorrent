@@ -698,11 +698,13 @@
                 window.nkt.userList[e.detail.data.msgFrom].pauseSessionEstablishmentParsing = true;
                 console.log('PARSING SESSION ESTABLISHMENT FROM ' + e.detail.data.msgFrom);
                 console.log(e.detail);
-                parseSessionEstablishment(e.detail).then((plaintext) => {
+                const detail = JSON.parse(JSON.stringify(e.detail));
+                (detail => {
+                parseSessionEstablishment(detail).then((plaintext) => {
                     console.log('decrypted session establishment :');
                     console.log(plaintext);
                     if (plaintext === window.nkt.mySwarm.address()) {
-                        window.nkt.userList[e.detail.data.msgFrom].sessionEstablished = true;
+                        window.nkt.userList[detail.data.msgFrom].sessionEstablished = true;
                         resilientSend({
                             msgType: 'pingMessage',
                             msgData: 'encrypted test',
@@ -718,11 +720,11 @@
                         }, false);
                     } else {
                         console.log('BAD SESSION ESTABLISHMENT');
-                        console.log(e);
-                        window.nkt.userList[e.detail.data.msgFrom].pauseSessionEstablishmentParsing = false;
-                        if (!window.nkt.userList[e.detail.data.msgFrom].sessionEstablished) {
+                        console.log(detail);
+                        window.nkt.userList[detail.data.msgFrom].pauseSessionEstablishmentParsing = false;
+                        if (!window.nkt.userList[detail.data.msgFrom].sessionEstablished) {
                             //delete window.nkt.userList[e.detail.data.msgFrom];
-                            console.log('asking '+ e.detail.data.msgFrom +' to reestablish session')
+                            console.log('asking '+ detail.data.msgFrom +' to reestablish session')
                             //askPeerToReEstablishSession(e.detail.data.msgFrom);
                             //console.log('prekey known for peer is');
                             //console.log(window.nkt.userList[e.detail.data.msgFrom].preKey);
@@ -742,6 +744,7 @@
                     startSignalSessionWith(e.detail.data.msgFrom);
                     */
                 });
+                })(detail);
             }
         });
         window.addEventListener('nktincomingdata', (e) => {
