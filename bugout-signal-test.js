@@ -212,7 +212,7 @@
     // BUGOUT SERVER
     const startWebRTCServer = () => {
         const b = new Bugout(window.nkt.singleSwarmID, { "announce": window.nkt.trackers });
-        b.heartbeat(2000);
+        //b.heartbeat(2000);
         b.on('message', (address, message) => {
             handleMessageFromSwarm(address, message);
         });
@@ -263,8 +263,10 @@
             const swarmAddr = message.msgFrom;
             switch (message.msgType) {
                 case 'newSwarmAddress':
-                    if (!window.nkt.userList[swarmAddr]) {
-                        handleUnknownSwarmAddress(swarmAddr);
+                    for (let addr of swarmAddr.split(',')) {
+                        if (!window.nkt.userList[addr]) {
+                            handleUnknownSwarmAddress(addr);
+                        }
                     }
                     break;
                 default:
@@ -291,18 +293,33 @@
         window.dispatchEvent(new CustomEvent('nktnewpeer', {
             detail: { data: { addr: swarmAddr } }
         }));
-        console.log('joining new swarm ' + swarmAddr);
-        startWebRTCClient(swarmAddr);
+        //console.log('joining new swarm ' + swarmAddr);
+        //startWebRTCClient(swarmAddr);
     }
 
     const beginSwarmAddrBroadcast = () => {
         if (!window.broadcastingSwarmAddr) {
             window.broadcastingSwarmAddr = false;
+            // Broadcast known peers also !
+            const addrArr = Object.keys(window.nkt.userList);
+            const userStr = (addrArr.length > 0) ? ',' + addrArr.join(',') : '';
             resilientSend({
                 msgType: 'newSwarmAddress',
-                msgFrom: window.nkt.mySwarm.address(),
+                msgFrom: window.nkt.mySwarm.address() + userStr,
                 msgDate: (new Date()).getTime().toString()
             });
+
+            /*
+            // Broadcast known peers
+            for (let i in window.nkt.userList) {
+                resilientSend({
+                    msgType: 'newSwarmAddress',
+                    msgFrom: i,
+                    msgDate: (new Date()).getTime().toString()
+                });
+            }
+            */
+            
             /*
             window.nkt.websocket.emit(window.nkt.websocketEventName, {
                 msgType: 'newSwarmAddress',
@@ -335,7 +352,9 @@
         //console.log('RECEIVED MESSAGE FROM SWARM');
         //console.log(message);
         if (Object(message) === message && message.msgFrom) {
-            setClientAddressForSwarmPeer(message.msgFrom, address);
+            for (let addr of address.split(',')) {
+                setClientAddressForSwarmPeer(addr, message.msgFrom);
+            }
         }
         checkNotAlreadyIn(message, 'receivedMessages')
             .then(() => {
