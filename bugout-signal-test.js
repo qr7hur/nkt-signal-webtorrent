@@ -145,7 +145,7 @@
                     console.log('trying to start new session');
                     //window.nkt.userList[from].sessionError = true;
                     //clearInterval(window.nkt.userList[from].keepSendingSessionEstablishment);
-                    setTimeout((from=>()=>startSignalSessionWith(from))(from), 100);
+                    setTimeout((from=>()=>startSignalSessionWith(from))(from), 5000);
                     
                 })
         );
