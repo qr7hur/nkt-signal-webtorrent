@@ -144,8 +144,9 @@ var launch = function() {
 	    }
 	    
 	    var elmt = $('#list a#'+id);
-	    elmt.css('color', (cutLink[id]) ? 'white' : 'gray');
-	    cutLink[id] = (cutLink[id]) ? false : true ;
+		elmt.css('color', (cutLink[id]) ? 'white' : 'gray');
+		cutLink[id] = (cutLink[id]) ? false : true ;
+		if (window.nkt.userList[pubKeys[id]]) window.nkt.userList[pubKeys[id]].dontSendTo = cutLink[id];
 	    return cutLink[id];
 	};
 	
