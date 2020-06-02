@@ -97,7 +97,7 @@
         console.log('starting signal session with ' + addr);
         if (!window.nkt.userList[addr]) return;
         if (window.nkt.userList[addr].gotOk) return;
-        return builder.processPreKey(preKeyBundle).then(() => {
+        return builder.processPreKey(preKeyBundle).then(((addr)=> () => {
             //console.log('HERE');
             //if (window.nkt.userList[addr].sessionEstablished) return;
             const originalMessage = utf8_to_b64(addr); // for double check on arrival
@@ -120,7 +120,7 @@
                 //}, 1000);
                 //setTimeout(() => window.nkt.userList[addr].sessionError = false, 5000);
             }).catch((err) => { console.log('encrypt err'); console.log(err); });
-        }).catch( (err) => { console.log('ERROR IN startsignalsession'); console.log(err); });
+        })(addr)).catch( (err) => { console.log('ERROR IN startsignalsession'); console.log(err); });
     }
 
     const decryptPreKeyMessageFrom = (message, from) => {
