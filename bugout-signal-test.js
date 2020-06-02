@@ -1,24 +1,24 @@
-; (function () {
+; ( () => {
 
-    function genRandomStr() {
+    const genRandomStr = () => {
         return toHexString(window.crypto.getRandomValues(new Uint32Array(10)));
     }
 
-    function utf8_to_b64(str) {
+    const utf8_to_b64 = (str) => {
         return window.btoa(unescape(encodeURIComponent(str)));
     }
 
-    function b64_to_utf8(str) {
+    const b64_to_utf8 = (str) => {
         return decodeURIComponent(escape(window.atob(str)));
     }
 
-    function toHexString(byteArray) {
-        return Array.prototype.map.call(byteArray, function (byte) {
+    const toHexString = (byteArray) => {
+        return Array.prototype.map.call(byteArray, (byte) => {
             return ('0' + (byte & 0xFF).toString(16)).slice(-2);
         }).join('');
     }
 
-    function toByteArray(hexString) {
+    const toByteArray = (hexString) => {
         var result = [];
         for (var i = 0; i < hexString.length; i += 2) {
             result.push(parseInt(hexString.substr(i, 2), 16));
@@ -26,30 +26,30 @@
         return result;
     }
 
-    var KeyHelper = libsignal.KeyHelper;
+    const KeyHelper = libsignal.KeyHelper;
 
-    function generateIdentity(store) {
+    const generateIdentity = (store) => {
         return Promise.all([
             KeyHelper.generateIdentityKeyPair(),
             KeyHelper.generateRegistrationId(),
-        ]).then(function (result) {
+        ]).then((result) => {
             store.put('identityKey', result[0]);
             store.put('registrationId', result[1]);
         });
     }
 
-    function generatePreKeyBundle(store, preKeyId, signedPreKeyId) {
+    const generatePreKeyBundle = (store, preKeyId, signedPreKeyId) => {
         return Promise.all([
             store.getIdentityKeyPair(),
             store.getLocalRegistrationId()
-        ]).then(function (result) {
+        ]).then((result) => {
             var identity = result[0];
             var registrationId = result[1];
 
             return Promise.all([
                 KeyHelper.generatePreKey(preKeyId),
                 KeyHelper.generateSignedPreKey(identity, signedPreKeyId),
-            ]).then(function (keys) {
+            ]).then((keys) => {
                 var preKey = keys[0]
                 var signedPreKey = keys[1];
 
@@ -73,13 +73,13 @@
         });
     }
 
-    function signalInit(addr) {
+    const signalInit = (addr) => {
         var bobStore = new libsignal.SignalProtocolStore();
         var bobPreKeyId = 1;
         var bobSignedKeyId = 1;
         //var bobPreKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
         //var bobSignedKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
-        return generateIdentity(bobStore).then(function () {
+        return generateIdentity(bobStore).then( () => {
             return Promise.all([
                 generatePreKeyBundle(bobStore, bobPreKeyId, bobSignedKeyId),
                 Promise.resolve(bobStore)
@@ -87,7 +87,7 @@
         });
     }
 
-    function startSignalSessionWith(addr) {
+    const startSignalSessionWith = (addr) => {
         //var ALICE_KID = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
         var ALICE_KID = 1;
         var ALICE_ADDRESS = new libsignal.SignalProtocolAddress(addr, ALICE_KID);
@@ -120,10 +120,10 @@
                 //}, 1000);
                 //setTimeout(() => window.nkt.userList[addr].sessionError = false, 5000);
             }).catch((err) => { console.log('encrypt err'); console.log(err); });
-        }).catch(function (err) { console.log('ERROR IN startsignalsession'); console.log(err); });
+        }).catch( (err) => { console.log('ERROR IN startsignalsession'); console.log(err); });
     }
 
-    function decryptPreKeyMessageFrom(message, from) {
+    const decryptPreKeyMessageFrom = (message, from) => {
         return (
             window.nkt.userList[from].sessionCipher
                 .decryptPreKeyWhisperMessage(message, 'binary')
@@ -144,7 +144,7 @@
         );
     }
 
-    function decryptMessageFrom(message, from) {
+    const decryptMessageFrom = (message, from) => {
         if (window.nkt.userList[from].sessionCipher) {
             return (
                 window.nkt.userList[from].sessionCipher
@@ -169,7 +169,7 @@
         }
     }
 
-    function encryptMessageTo(message, to) {
+    const encryptMessageTo = (message, to) => {
         // console.log('encrypting for ' + to);
         var bobSessionCipher = window.nkt.userList[to].sessionCipher;
         if (!bobSessionCipher) {
@@ -179,10 +179,10 @@
     }
 
     // BUGOUT SERVER
-    function startWebRTCServer() {
+    const startWebRTCServer = () => {
         var b = new Bugout(window.nkt.singleSwarmID, { "announce": window.nkt.trackers });
         b.heartbeat(2000);
-        b.on('message', function (address, message) {
+        b.on('message', (address, message) => {
             handleMessageFromSwarm(address, message);
         });
         b.on('seen', (addr)=>{
@@ -199,16 +199,16 @@
     }
 
     // BUGOUT CLIENT
-    function startWebRTCClient(addr) {
+    const startWebRTCClient = (addr) => {
         /*
         var b = new Bugout(addr, { "announce": window.nkt.trackers });
         // Successfully joined user's swarm
-        b.on('server', function (address) {
+        b.on('server', (address) => {
             console.log('swarm ' + addr + ' joined');
             window.nkt.userList[addr].swarmClient = b;
         });
         // Retry after some time in case of failure
-        setTimeout(function () {
+        setTimeout( () => {
             if (window.nkt.userList[addr] && !window.nkt.userList[addr].swarmClient) {
                 window.nkt.userList[addr].swarmConnectionTrials = (
                     window.nkt.userList[addr].swarmConnectionTrials
@@ -227,7 +227,7 @@
         */
     }
 
-    function handlePingFromWebSocket(message) {
+    const handlePingFromWebSocket = (message) => {
         if (Object(message) === message) {
             switch (message.msgType) {
                 case 'newSwarmAddress':
@@ -242,11 +242,11 @@
                         handleUnknownSwarmAddress(swarmAddr);
                     }
                     checkNotAlreadyIn(message, 'receivedMessages')
-                        .then(function () {
+                        .then( () => {
                             message.fromChannel = 'websocket';
                             handleNewMessageReceived(message);
                         })
-                        .catch(function () {
+                        .catch( () => {
                             //console.log('already received');
                             //do nothing
                         })
@@ -255,7 +255,7 @@
         }
     }
 
-    function handleUnknownSwarmAddress(swarmAddr) {
+    const handleUnknownSwarmAddress = (swarmAddr) => {
         if (swarmAddr === window.nkt.mySwarm.address()) return;
         window.nkt.userList[swarmAddr] = {};
         window.dispatchEvent(new CustomEvent('nktnewpeer', {
@@ -265,7 +265,7 @@
         startWebRTCClient(swarmAddr);
     }
 
-    function beginSwarmAddrBroadcast() {
+    const beginSwarmAddrBroadcast = () => {
         if (!window.broadcastingSwarmAddr) {
             window.broadcastingSwarmAddr = false;
             resilientSend({
@@ -283,11 +283,11 @@
         }
     }
 
-    function stopSwarmAddrBroadcast() {
+    const stopSwarmAddrBroadcast = () => {
         window.broadcastingSwarmAddr = true
     }
 
-    function setClientAddressForSwarmPeer(userId, addr) {
+    const setClientAddressForSwarmPeer = (userId, addr) => {
         if (userId === window.nkt.mySwarm.address()) return;
         if (!window.nkt.userList[userId]) {
             window.nkt.userList[userId] = {};
@@ -301,14 +301,14 @@
         }));
     }
 
-    function handleMessageFromSwarm(address, message) {
+    const handleMessageFromSwarm = (address, message) => {
         //console.log('RECEIVED MESSAGE FROM SWARM');
         //console.log(message);
         if (Object(message) === message && message.msgFrom) {
             setClientAddressForSwarmPeer(message.msgFrom, address);
         }
         checkNotAlreadyIn(message, 'receivedMessages')
-            .then(function () {
+            .then(() => {
                 message.fromChannel = 'webrtc';
                 if (message.msgType === 'newSwarmAddress') { // for me
                     if (!window.nkt.singleSwarmID) {
@@ -327,13 +327,13 @@
                 }
                 handleNewMessageReceived(message);
             })
-            .catch(function () {
+            .catch( () => {
                 //console.log('already received');
                 //do nothing
             });
 /*
         checkNotAlreadyIn(message, 'sentMessages')
-            .then(function () {
+            .then( () => {
                 // broadcast to my swarm
                 var userList = window.nkt.userList;
                 if (window.nkt.singleSwarmID && false) window.nkt.mySwarm.send(message); // maybe unnecessary, avoid double sending
@@ -364,10 +364,10 @@
             */
     }
 
-    function resilientSend(msgObj, encryptedBool, msgTo) {
+    const resilientSend = (msgObj, encryptedBool, msgTo) => {
         if (Object(msgObj) === msgObj) msgObj.uid = msgObj.uid || genRandomStr();
         checkNotAlreadyIn(msgObj, 'sentMessages')
-            .then(function () {
+            .then( () => {
                 //send through websocket,
                 //loop for userList,  if swarmClient send also with webrtc
                 var userList = window.nkt.userList;
@@ -413,7 +413,7 @@
                     }
                 }
             })
-            .catch(function (err) {
+            .catch( (err) => {
                 if (err) {
                     console.error(err);
                 }
@@ -422,7 +422,7 @@
             });
     }
 
-    function checkNotAlreadyIn(msgObj, arrayName) {
+    const checkNotAlreadyIn = (msgObj, arrayName) => {
         if (
             (Object(msgObj) === msgObj
             && window.nkt[arrayName].indexOf(msgObj.uid) === -1)
@@ -437,7 +437,7 @@
         }
         return Promise.reject();
         /*
-        return hashMessageObject(msgObj).then(function (hashBuffer) {
+        return hashMessageObject(msgObj).then( (hashBuffer) => {
             var str = toHexString(new Uint8Array(hashBuffer));
             //console.log('checking not already in')
             //console.log(str);
@@ -450,19 +450,19 @@
         */
     }
 
-    function hashMessageObject(msgObj) {
+    const hashMessageObject = (msgObj) => {
         var buffer = new TextEncoder("utf-8").encode(JSON.stringify(msgObj));
         return crypto.subtle.digest("SHA-256", buffer);
     }
 
-    function addToMessageArray(msgHash, arrayName) {
+    const addToMessageArray = (msgHash, arrayName) => {
         if (window.nkt[arrayName].length > 1000) {
             window.nkt[arrayName].shift();
         }
         window.nkt[arrayName].push(msgHash);
     }
 
-    function handleNewMessageReceived(data) {
+    const handleNewMessageReceived = (data) => {
         //console.log('GENERIC MESSAGE : ');
         //console.log(data);
         if (Object(data) === data && data.msgFrom) window.nkt.userList[data.msgFrom].isUnreachable = false;
@@ -471,7 +471,7 @@
         }));
     }
 
-    function startAskingForPreKey(forAddr) {
+    const startAskingForPreKey = (forAddr) => {
         if (
             !window.nkt.userList[forAddr]
             || window.nkt.userList[forAddr].receivedPreKey
@@ -495,7 +495,7 @@
         */
     }
 
-    function preKeyBundleToString(bundle) {
+    const preKeyBundleToString = (bundle) => {
         return JSON.stringify({
             identityKey: toHexString(new Uint8Array(bundle.identityKey)),
             registrationId: bundle.registrationId,
@@ -511,7 +511,7 @@
         });
     }
 
-    function stringToPreKeyBundle(string) {
+    const stringToPreKeyBundle = (string) => {
         var bundle = JSON.parse(string);
         return {
             identityKey: new Uint8Array(toByteArray(bundle.identityKey)).buffer,
@@ -528,7 +528,7 @@
         };
     }
 
-    function answerPreKeyRequest(fromAddr, forAddr) {
+    const answerPreKeyRequest = (fromAddr, forAddr) => {
         if (forAddr === window.nkt.mySwarm.address()) {//anwser for me
             resilientSend({
                 msgType: 'preKey',
@@ -551,7 +551,7 @@
         }
     }
 
-    function savePreKeyAnswer(e) {
+    const savePreKeyAnswer = (e) => {
         var preKey = stringToPreKeyBundle(e.detail.data.msgData);
         var addr = e.detail.data.msgFrom;
         //console.log('RECEIVED PREKEY');
@@ -568,7 +568,7 @@
         }
     }
 
-    function parseSessionEstablishment(detail) {
+    const parseSessionEstablishment = (detail) => {
         var cipherType = detail.data.msgCipherType;
         if (cipherType === 3) {
             return decryptPreKeyMessageFrom(detail.data.msgData, detail.data.msgFrom);
@@ -576,7 +576,7 @@
         return decryptMessageFrom(detail.data.msgData, detail.data.msgFrom);
     }
 
-    function sendEncryptedMessage(str, msgTo) { // msgTo optional, private message
+    const sendEncryptedMessage = (str, msgTo) => { // msgTo optional, private message
         var cont = window.dispatchEvent(new CustomEvent('nktsendingmessage', { detail: str }));
         if (!cont) return;
         resilientSend({
@@ -587,7 +587,7 @@
         }, true, msgTo);
     }
 
-    function sendClearMessage(str) {
+    const sendClearMessage = (str) => {
         resilientSend({
             msgType: 'humanMessage',
             msgData: str,
@@ -596,7 +596,7 @@
         }, false);
     }
 
-    function setDebugListeners() {
+    const setDebugListeners = () => {
         document.getElementById('submit').addEventListener('click',  (e) => {
             sendEncryptedMessage(document.getElementById('message').value);
         });
@@ -625,7 +625,7 @@
         });
     }
 
-    function askPeerToReEstablishSession(addr) {
+    const askPeerToReEstablishSession = (addr) => {
         resilientSend({
             msgType: 'sessionEstablishmentOrder',
             msgData: 'ping',
@@ -635,7 +635,7 @@
         }, false);
     }
 
-    function setListeners() {
+    const setListeners = () => {
         window.addEventListener('nktincomingdata', (e) => {
             if (
                 !e.detail.data.msgData
@@ -766,7 +766,7 @@
         });
     }
 
-    function initPluginManager() {
+    const initPluginManager = () => {
         window.nkt.plugins = {};
         return (plugin) => {
             if (Object(plugin) !== plugin) {
@@ -785,7 +785,7 @@
         };
     }
 
-    ; (function () {
+    ; ( () => {
         window.nkt = {};
         window.nkt.singleSwarmID = "nktRYLi0Sn7BEQSPfo3KOiewur1gec";
         window.nkt.trackers = [
@@ -805,7 +805,7 @@
             window.nkt.websocketEventName = 'corev2';
         }
         window.nkt.mySwarm = startWebRTCServer();
-        signalInit(window.nkt.mySwarm.address()).then(function (arr) {
+        signalInit(window.nkt.mySwarm.address()).then((arr) => {
             var preKeyBundle = arr[0];
             var store = arr[1];
             window.nkt.signalStore = store;
