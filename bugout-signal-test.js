@@ -103,6 +103,7 @@
             const originalMessage = utf8_to_b64(addr); // for double check on arrival
             const bobSessionCipher = new libsignal.SessionCipher(bobStore, ALICE_ADDRESS);
             //window.nkt.userList[addr].sessionCipher = bobSessionCipher;
+            window.nkt.userList[addr].sessionCipher = undefined;
             bobSessionCipher.encrypt(originalMessage).then((ciphertext) => {
                 //console.log('ciphertext');
                 //console.log(ciphertext);
@@ -129,8 +130,14 @@
                 .decryptPreKeyWhisperMessage(message, 'binary')
                 .then(plaintext => Promise.resolve(b64_to_utf8(signalUtil.toString(plaintext))))
                 .catch(err => {
+                    /*
+                    if (
+                        !window.nkt.userList[from].sessionEstablished
+                        || window.nkt.userList[from].gotOk
+                    ) return;
                     console.log('decryptPreKeyMessageError');
                     console.log(err);
+                    */
                     //if (window.nkt.userList[from].sessionError) return;
                     
                     //if (window.nkt.userList[from].gotOk) return;
@@ -138,7 +145,7 @@
                     console.log('trying to start new session');
                     //window.nkt.userList[from].sessionError = true;
                     //clearInterval(window.nkt.userList[from].keepSendingSessionEstablishment);
-                    startSignalSessionWith(from);
+                    setTimeout((from=>()=>startSignalSessionWith(from))(from), 100);
                     
                 })
         );
