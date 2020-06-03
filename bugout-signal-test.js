@@ -291,6 +291,16 @@
                     }
                     checkNotAlreadyIn(message, 'receivedMessages')
                         .then( () => {
+                            if (
+                                message.msgType === 'bugoutEncrypted'
+                                && message.msgTo === window.nkt.mySwarm.address()
+                            ) {
+                                message = bugoutDecrypt(window.nkt.mySwarm, message.msgData);
+                                if (!message) {
+                                    console.log('bugout decrypt failed');
+                                    return;
+                                }
+                            }
                             message.fromChannel = 'websocket';
                             handleNewMessageReceived(message);
                         })
@@ -325,8 +335,8 @@
         if (userId === window.nkt.mySwarm.address()) return;
         if (!window.nkt.userList[userId]) {
             window.nkt.userList[userId] = {};
-            if (!window.nkt.mySwarm.peers[swarmAddr]) {
-                window.nkt.mySwarm.peers[swarmAddr] = {
+            if (!window.nkt.mySwarm.peers[userId]) {
+                window.nkt.mySwarm.peers[userId] = {
                     pk: bugoutPk,
                     ek: bugoutEk,
                     last: 0
@@ -450,6 +460,92 @@
             */
     }
 
+    function now() {
+        return (new Date()).getTime();
+    }
+
+    function bugoutMakePacket(bugout, params) {
+        var p = {
+          "t": now(),
+          "i": bugout.identifier,
+          "pk": bugout.pk,
+          "ek": bugout.ek,
+          "n": nacl.randomBytes(8),
+        };
+        for (var k in params) {
+          p[k] = params[k];
+        }
+        pe = bencode.encode(p);
+        return bencode.encode({
+          "s": nacl.sign.detached(pe, bugout.keyPair.secretKey),
+          "p": pe,
+        });
+      }
+
+    const bugoutEncrypt = (bugout, pk, packet) => {
+        if (bugout.peers[bugout.address(pk)]) {
+            var nonce = nacl.randomBytes(nacl.box.nonceLength);
+            packet = bencode.encode({
+            "n": nonce,
+            "ek": bs58.encode(Buffer.from(bugout.keyPairEncrypt.publicKey)),
+            "e": nacl.box(packet, nonce, bs58.decode(bugout.peers[bugout.address(pk)].ek), bugout.keyPairEncrypt.secretKey),
+            });
+        } else {
+            throw bugout.address(pk) + " not seen - no encryption key.";
+        }
+        return packet;
+    }
+
+    const bugoutDecrypt = (bugout, message) => {
+        var unpacked = bencode.decode(message);
+        // if this is an encrypted packet first try to decrypt it
+        if (unpacked.e && unpacked.n && unpacked.ek) {
+            var ek = unpacked.ek.toString();
+            //console.log("message encrypted by", ek, unpacked);
+            var decrypted = nacl.box.open(unpacked.e, unpacked.n, bs58.decode(ek), bugout.keyPairEncrypt.secretKey);
+            if (decrypted) {
+                unpacked = bencode.decode(decrypted);
+            } else {
+                unpacked = null;
+            }
+        }
+        // if there's no data decryption failed
+        if (unpacked && unpacked.p) {
+            console.log("unpacked message", unpacked);
+            var packet = bencode.decode(unpacked.p);
+            var pk = packet.pk.toString();
+            var id = packet.i.toString();
+            var checksig = nacl.sign.detached.verify(unpacked.p, unpacked.s, bs58.decode(pk));
+            var checkid = id == bugout.identifier;
+            var checktime = true;
+            console.log("packet", packet);
+            if (checksig && checkid && checktime) {
+                // message is authenticated
+                var ek = packet.ek.toString();
+                // check packet types
+                console.log("message", bugout.identifier, packet);
+                var messagestring = packet.v.toString();
+                console.log('MESSAGE STRING',messagestring)
+                var messagejson = null;
+                try {
+                    var messagejson = JSON.parse(messagestring);
+                } catch(e) {
+                    console.log("Malformed message JSON: " + messagestring);
+                }
+                if (messagejson) {
+                    return messagejson;
+                }
+            } else {
+                console.log("dropping bad packet", checksig, checkid, checktime);
+            }
+        } else {
+            console.log("skipping packet with no payload", unpacked);
+        }
+        // forward first-seen message to all connected wires
+        // TODO: block flooders
+        return {};
+    }
+
     const resilientSend = (msgObj, encryptedBool, msgTo) => {
         if (Object(msgObj) === msgObj) msgObj.uid = msgObj.uid || genRandomStr();
         return checkNotAlreadyIn(msgObj, 'sentMessages')
@@ -462,10 +558,10 @@
                     for (let i in userList) {
                         if (userList[i].dontSendTo || userList[i].isUnreachable) continue; // TODO
                         if (msgTo && i !== msgTo) continue; // meh
-                        if (window.nkt.disableSignal) {
+                        if (!userList[i].useSignal) {
                             const msg = {
                                 msgDate: msgObj.msgDate,
-                                msgType: 'fakeEncrypted',
+                                msgType: 'bugoutEncrypted',
                                 msgData: msgObj.msgData,
                                 msgTo: i,
                                 msgFrom: window.nkt.mySwarm.address(), 
@@ -473,8 +569,25 @@
                                 msgBugoutEk: window.nkt.mySwarm.ek,
                                 uid: genRandomStr()
                             };
-                            window.nkt.websocket.emit(window.nkt.websocketEventName, msg);
                             if (window.nkt.singleSwarmID) window.nkt.mySwarm.send(i, msg);
+                            window.nkt.websocket.emit(
+                                window.nkt.websocketEventName,
+                                {
+                                    msgDate: msgObj.msgDate,
+                                    msgType: 'bugoutEncrypted',
+                                    msgData: bugoutEncrypt(
+                                        window.nkt.mySwarm,
+                                        window.nkt.mySwarm.peers[i].pk,
+                                        bugoutMakePacket(window.nkt.mySwarm, {"y":"m","v": JSON.stringify(msg)})
+                                    ),
+                                    msgTo: i,
+                                    msgFrom: window.nkt.mySwarm.address(), 
+                                    msgBugoutPk: window.nkt.mySwarm.pk,
+                                    msgBugoutEk: window.nkt.mySwarm.ek,
+                                    uid: msg.uid
+                                }
+                            );
+                            
                             continue;
                         }
                         encryptMessageTo(JSON.stringify(msgObj), i).then((ciphertext) => {
@@ -535,11 +648,12 @@
             && window.nkt[arrayName].indexOf(msgObj.uid) === -1)
             || !msgObj.uid
         ) {
-            addToMessageArray(msgObj.uid, arrayName);
             if (!msgObj.uid) {
                 console.log(arrayName + ' NO UID IN');
                 console.log(msgObj);
+                return Promise.reject();
             }
+            addToMessageArray(msgObj.uid, arrayName);
             return Promise.resolve();
         }
         return Promise.reject();
@@ -574,7 +688,7 @@
         //console.log(data);
         if (Object(data) === data) {
             if (data.msgFrom) window.nkt.userList[data.msgFrom].isUnreachable = false; //heard from
-            if (!data.ping && window.nkt.singleSwarmID && data.msgType === 'encrypted') {
+            if (!data.ping && window.nkt.singleSwarmID && (data.msgType === 'encrypted' || data.msgType === 'bugoutEncrypted')) {
                 if (data.fromChannel === 'webrtc') {
                     delete data.fromChannel;
                     checkNotAlreadyIn(data, 'sentMessages').then(()=>{
@@ -586,10 +700,9 @@
                         window.nkt.mySwarm.send(data);
                     }).catch(()=>{});
                 }
-                resilientSend(message); // resend if not a ping
+                //resilientSend(message); // resend if not a ping
             }
         }
-
         window.dispatchEvent(new CustomEvent('nktincomingdata', {
             detail: { data }
         }));
@@ -788,6 +901,17 @@
         }, false);
     }
 
+    const askPeerToUseSignalForMe = (addr) => {
+        resilientSend({
+            msgType: 'signalEnableOrder',
+            msgDate: (new Date()).getTime().toString(),
+            msgFrom: window.nkt.mySwarm.address(),
+            msgBugoutPk: window.nkt.mySwarm.pk,
+            msgBugoutEk: window.nkt.mySwarm.ek,
+            msgTo: addr
+        }, false);
+    }
+
     const setListeners = () => {
         window.addEventListener('nktincomingdata', (e) => {
             if (
@@ -831,7 +955,7 @@
                 || !e.detail.data.msgFrom
             ) return;
             if (
-                e.detail.data.msgType !== 'fakeEncrypted'
+                e.detail.data.msgType !== 'bugoutEncrypted'
                 || e.detail.data.msgTo !== window.nkt.mySwarm.address()
                 || e.detail.data.msgTo === e.detail.data.msgFrom
             ) return;
@@ -840,9 +964,7 @@
 
         // Signal
         window.addEventListener('nktnewpeer', (e) => {
-            if (!window.nkt.disableSignal) {
-                startAskingForPreKey(e.detail.data.addr);
-            }
+            startAskingForPreKey(e.detail.data.addr);
         });
         window.addEventListener('nktincomingdata', (e) => {
             if (e.detail.data.msgType === 'preKeyRequest') {
@@ -882,6 +1004,9 @@
                     console.log(plaintext);
                     if (plaintext === window.nkt.mySwarm.address()) {
                         window.nkt.userList[detail.data.msgFrom].sessionEstablished = true;
+                        askPeerToUseSignalForMe(detail.data.msgFrom);
+                        console.log('ENABLING SIGNAL FOR' + detail.data.msgFrom);
+                        window.nkt.userList[detail.data.msgFrom].useSignal = true;
                         /*
                         resilientSend({
                             msgType: 'pingMessage',
@@ -970,12 +1095,20 @@
             }
         });
 
+        window.addEventListener('nktincomingdata', (e) => {
+            if (e.detail.data.msgType === 'signalEnableOrder') {
+                if (e.detail.data.msgTo !== window.nkt.mySwarm.address()) return;
+                console.log('ENABLING SIGNAL FOR' + e.detail.data.msgFrom);
+                window.nkt.userList[e.detail.data.msgFrom].useSignal = true;
+            }
+        });
+
         /*
         window.addEventListener('nktincomingdata', (e) => {
             if (e.detail.data.msgType === 'sessionDestroyOrder') {
                 if (e.detail.data.msgTo !== window.nkt.mySwarm.address()) return;
                 window.nkt.signalStore.removeSession(e.detail.data.msgFrom + '.1');
-                //window.userList[e.detail.data.msgFrom].sessionCipher = null;
+                //window.nkt.userList[e.detail.data.msgFrom].sessionCipher = null;
                 console.log('SESSION DESTROYED');
                 setTimeout(()=>{
                     resilientSend({
@@ -1068,9 +1201,6 @@
         window.nkt.plugin = initPluginManager();
 
         window.nkt.preload = setInterval(()=>sendClearMessage(Math.random.toString()), 500);
-
-        // CAREFUL
-        window.nkt.disableSignal = true;
 
 
         // setDebugListeners();
