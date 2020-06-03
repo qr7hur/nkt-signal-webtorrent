@@ -511,21 +511,21 @@
         }
         // if there's no data decryption failed
         if (unpacked && unpacked.p) {
-            console.log("unpacked message", unpacked);
+            //console.log("unpacked message", unpacked);
             var packet = bencode.decode(unpacked.p);
             var pk = packet.pk.toString();
             var id = packet.i.toString();
             var checksig = nacl.sign.detached.verify(unpacked.p, unpacked.s, bs58.decode(pk));
             var checkid = id == bugout.identifier;
             var checktime = true;
-            console.log("packet", packet);
+            //console.log("packet", packet);
             if (checksig && checkid && checktime) {
                 // message is authenticated
                 var ek = packet.ek.toString();
                 // check packet types
-                console.log("message", bugout.identifier, packet);
+                //console.log("message", bugout.identifier, packet);
                 var messagestring = packet.v.toString();
-                console.log('MESSAGE STRING',messagestring)
+                //console.log('MESSAGE STRING',messagestring)
                 var messagejson = null;
                 try {
                     var messagejson = JSON.parse(messagestring);
@@ -557,7 +557,7 @@
                 if (encryptedBool) {
                     for (let i in userList) {
                         if (userList[i].dontSendTo || userList[i].isUnreachable) continue; // TODO
-                        if (msgTo && i !== msgTo) continue; // meh
+                        if (msgTo && i !== msgTo && false) continue; // meh
                         if (!userList[i].useSignal) {
                             const msg = {
                                 msgDate: msgObj.msgDate,
@@ -688,15 +688,16 @@
         //console.log(data);
         if (Object(data) === data) {
             if (data.msgFrom) window.nkt.userList[data.msgFrom].isUnreachable = false; //heard from
-            if (true || !data.ping && window.nkt.singleSwarmID && (data.msgType === 'encrypted' || data.msgType === 'bugoutEncrypted')) {
+            //if (!data.ping && window.nkt.singleSwarmID && (data.msgType === 'encrypted' || data.msgType === 'bugoutEncrypted')) {
+            if (!data.ping && window.nkt.singleSwarmID && (data.msgType === 'encrypted' || data.msgType === 'bugoutEncrypted')) {
                 if (data.fromChannel === 'webrtc') {
-                    delete data.fromChannel;
-                    checkNotAlreadyIn(data, 'sentMessages').then(()=>{
+                    //delete data.fromChannel;
+                    checkNotAlreadyIn(data, 'resentMessages').then(()=>{
                         window.nkt.websocket.emit(window.nkt.websocketEventName, data);
                     }).catch(()=>{});
                 } else if (data.fromChannel === 'websocket') {
-                    delete data.fromChannel;
-                    checkNotAlreadyIn(data, 'sentMessages').then(()=>{
+                    //delete data.fromChannel;
+                    checkNotAlreadyIn(data, 'resentMessages').then(()=>{
                         window.nkt.mySwarm.send(data);
                     }).catch(()=>{});
                 }
@@ -1177,6 +1178,7 @@
         ];
         window.nkt.userList = {};
         window.nkt.sentMessages = [];
+        window.nkt.resentMessages = [];
         window.nkt.receivedMessages = [];
         if (window.location.href.indexOf('localhost') > -1) {
             window.nkt.trackers.push("ws://localhost:8000");
