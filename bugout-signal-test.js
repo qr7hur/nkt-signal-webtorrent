@@ -126,6 +126,8 @@
                     msgCipherType: ciphertext.type,
                     msgDate: (new Date()).getTime().toString(),
                     msgFrom: window.nkt.mySwarm.address(),
+                    msgBugoutPk: window.nkt.mySwarm.pk,
+                    msgBugoutEk: window.nkt.mySwarm.ek,
                     msgTo: addr
                 });
                 //window.nkt.userList[addr].receivedOrderToEstablish = false;
@@ -273,17 +275,19 @@
     const handlePingFromWebSocket = (message) => {
         if (Object(message) === message) {
             const swarmAddr = message.msgFrom;
+            const bugoutPk = message.msgBugoutPk;
+            const bugoutEk = message.msgBugoutEk;
             switch (message.msgType) {
                 case 'newSwarmAddress':
-                    for (let addr of swarmAddr.split(',')) {
-                        if (!window.nkt.userList[addr]) {
-                            handleUnknownSwarmAddress(addr);
+                    //for (let addr of swarmAddr.split(',')) {
+                        if (!window.nkt.userList[swarmAddr]) {
+                            handleUnknownSwarmAddress(swarmAddr, bugoutPk, bugoutEk);
                         }
-                    }
+                    //}
                     break;
                 default:
                     if (!window.nkt.userList[swarmAddr]) {
-                        handleUnknownSwarmAddress(swarmAddr);
+                        handleUnknownSwarmAddress(swarmAddr, bugoutPk, bugoutEk);
                     }
                     checkNotAlreadyIn(message, 'receivedMessages')
                         .then( () => {
@@ -299,15 +303,45 @@
         }
     }
 
-    const handleUnknownSwarmAddress = (swarmAddr) => {
+    const handleUnknownSwarmAddress = (swarmAddr, bugoutPk, bugoutEk) => {
         if (swarmAddr === window.nkt.mySwarm.address()) return;
         window.nkt.userList[swarmAddr] = {};
+        if (!window.nkt.mySwarm.peers[swarmAddr]) {
+            window.nkt.mySwarm.peers[swarmAddr] = {
+                pk: bugoutPk,
+                ek: bugoutEk,
+                last: 0
+            };
+        }
+        
         window.dispatchEvent(new CustomEvent('nktnewpeer', {
             detail: { data: { addr: swarmAddr } }
         }));
         //console.log('joining new swarm ' + swarmAddr);
         //startWebRTCClient(swarmAddr);
     }
+
+    const setClientAddressForSwarmPeer = (userId, addr, bugoutPk, bugoutEk) => {
+        if (userId === window.nkt.mySwarm.address()) return;
+        if (!window.nkt.userList[userId]) {
+            window.nkt.userList[userId] = {};
+            if (!window.nkt.mySwarm.peers[swarmAddr]) {
+                window.nkt.mySwarm.peers[swarmAddr] = {
+                    pk: bugoutPk,
+                    ek: bugoutEk,
+                    last: 0
+                };
+            }
+        }
+        if (window.nkt.userList[userId].swarmAddress === addr) {
+            return;
+        }
+        window.nkt.userList[userId].swarmAddress = addr;
+        window.dispatchEvent(new CustomEvent('nktnewpeer', {
+            detail: { data: { addr: userId } }
+        }));
+    }
+
 
     const beginSwarmAddrBroadcast = () => {
         if (!window.broadcastingSwarmAddr) {
@@ -319,6 +353,8 @@
             resilientSend({
                 msgType: 'newSwarmAddress',
                 msgFrom: window.nkt.mySwarm.address() + userStr,
+                msgBugoutPk: window.nkt.mySwarm.pk,
+                msgBugoutEk: window.nkt.mySwarm.ek,
                 msgDate: (new Date()).getTime().toString()
             });
 
@@ -347,26 +383,14 @@
         window.broadcastingSwarmAddr = true
     }
 
-    const setClientAddressForSwarmPeer = (userId, addr) => {
-        if (userId === window.nkt.mySwarm.address()) return;
-        if (!window.nkt.userList[userId]) {
-            window.nkt.userList[userId] = {};
-        }
-        if (window.nkt.userList[userId].swarmAddress === addr) {
-            return;
-        }
-        window.nkt.userList[userId].swarmAddress = addr;
-        window.dispatchEvent(new CustomEvent('nktnewpeer', {
-            detail: { data: { addr: userId } }
-        }));
-    }
+    
 
     const handleMessageFromSwarm = (address, message) => {
         //console.log('RECEIVED MESSAGE FROM SWARM');
         //console.log(message);
         if (Object(message) === message && message.msgFrom) {
             for (let addr of address.split(',')) {
-                setClientAddressForSwarmPeer(addr, message.msgFrom);
+                setClientAddressForSwarmPeer(addr, message.msgFrom, message.msgBugoutPk, message.msgBugoutEk);
             }
         }
         checkNotAlreadyIn(message, 'receivedMessages')
@@ -438,6 +462,21 @@
                     for (let i in userList) {
                         if (userList[i].dontSendTo || userList[i].isUnreachable) continue; // TODO
                         if (msgTo && i !== msgTo) continue; // meh
+                        if (window.nkt.disableSignal) {
+                            const msg = {
+                                msgDate: msgObj.msgDate,
+                                msgType: 'fakeEncrypted',
+                                msgData: msgObj.msgData,
+                                msgTo: i,
+                                msgFrom: window.nkt.mySwarm.address(), 
+                                msgBugoutPk: window.nkt.mySwarm.pk,
+                                msgBugoutEk: window.nkt.mySwarm.ek,
+                                uid: genRandomStr()
+                            };
+                            window.nkt.websocket.emit(window.nkt.websocketEventName, msg);
+                            if (window.nkt.singleSwarmID) window.nkt.mySwarm.send(i, msg);
+                            continue;
+                        }
                         encryptMessageTo(JSON.stringify(msgObj), i).then((ciphertext) => {
                             const msg = {
                                 msgType: 'encrypted',
@@ -445,6 +484,8 @@
                                 msgTo: i,
                                 msgFrom: window.nkt.mySwarm.address(),
                                 msgCipherType: ciphertext.type,
+                                msgBugoutPk: window.nkt.mySwarm.pk,
+                                msgBugoutEk: window.nkt.mySwarm.ek,
                                 uid: genRandomStr()
                             };
                             window.nkt.websocket.emit(window.nkt.websocketEventName, msg);
@@ -532,6 +573,7 @@
         //console.log('GENERIC MESSAGE : ');
         //console.log(data);
         if (Object(data) === data) {
+            if (data.msgFrom) window.nkt.userList[data.msgFrom].isUnreachable = false; //heard from
             if (!data.ping && window.nkt.singleSwarmID && data.msgType === 'encrypted') {
                 if (data.fromChannel === 'webrtc') {
                     delete data.fromChannel;
@@ -546,7 +588,6 @@
                 }
                 resilientSend(message); // resend if not a ping
             }
-            if (data.msgFrom) window.nkt.userList[data.msgFrom].isUnreachable = false; //heard from
         }
 
         window.dispatchEvent(new CustomEvent('nktincomingdata', {
@@ -565,6 +606,8 @@
         resilientSend({
             msgType: 'preKeyRequest',
             msgFrom: window.nkt.mySwarm.address(),
+            msgBugoutPk: window.nkt.mySwarm.pk,
+            msgBugoutEk: window.nkt.mySwarm.ek,
             msgForAddr: forAddr,
             msgTrial: window.nkt.userList[forAddr].preKeyRequestCount
         });
@@ -618,6 +661,8 @@
                 msgData: preKeyBundleToString(window.nkt.preKeyBundle),
                 msgDate: (new Date()).getTime().toString(),
                 msgFrom: window.nkt.mySwarm.address(),
+                msgBugoutPk: window.nkt.mySwarm.pk,
+                msgBugoutEk: window.nkt.mySwarm.ek,
                 msgTo: fromAddr
             });
         } else if(
@@ -630,6 +675,8 @@
                 msgData: preKeyBundleToString(window.nkt.userList[forAddr].preKey),
                 msgDate: (new Date()).getTime().toString(),
                 msgFrom: forAddr,
+                msgBugoutPk: window.nkt.mySwarm.pk,
+                msgBugoutEk: window.nkt.mySwarm.ek,
                 msgTo: fromAddr
             });
         }
@@ -665,7 +712,9 @@
             msgType: 'humanMessage',
             msgData: str,
             msgDate: (new Date()).getTime().toString(),
-            msgFrom: window.nkt.mySwarm.address()
+            msgFrom: window.nkt.mySwarm.address(),
+            msgBugoutEk: window.nkt.mySwarm.ek,
+            msgBugoutPk: window.nkt.mySwarm.pk
         }, true, msgTo);
     }
 
@@ -680,6 +729,8 @@
             msgType: 'humanMessage',
             msgData: str,
             msgDate: (new Date()).getTime().toString(),
+            msgBugoutPk: window.nkt.mySwarm.pk,
+            msgBugoutEk: window.nkt.mySwarm.ek,
             msgFrom: window.nkt.mySwarm.address()
         }, false);
     }
@@ -720,6 +771,8 @@
             msgData:  preKeyBundleToString(window.nkt.preKeyBundle),
             msgDate: (new Date()).getTime().toString(),
             msgFrom: window.nkt.mySwarm.address(),
+            msgBugoutPk: window.nkt.mySwarm.pk,
+            msgBugoutEk: window.nkt.mySwarm.ek,
             msgTo: addr
         }, false);
     }
@@ -729,6 +782,8 @@
             msgType: 'sessionDestroyOrder',
             msgDate: (new Date()).getTime().toString(),
             msgFrom: window.nkt.mySwarm.address(),
+            msgBugoutPk: window.nkt.mySwarm.pk,
+            msgBugoutEk: window.nkt.mySwarm.ek,
             msgTo: addr
         }, false);
     }
@@ -768,9 +823,26 @@
             }).catch(err => console.log(err))
         });
 
+        window.addEventListener('nktincomingdata', (e) => {
+            if (
+                !e.detail.data.msgData
+                || !e.detail.data.msgType
+                || !e.detail.data.msgTo
+                || !e.detail.data.msgFrom
+            ) return;
+            if (
+                e.detail.data.msgType !== 'fakeEncrypted'
+                || e.detail.data.msgTo !== window.nkt.mySwarm.address()
+                || e.detail.data.msgTo === e.detail.data.msgFrom
+            ) return;
+            window.dispatchEvent(new CustomEvent('nktencryptedmessagereceived', { detail: e.detail.data.msgData }));
+        });
+
         // Signal
         window.addEventListener('nktnewpeer', (e) => {
-            startAskingForPreKey(e.detail.data.addr);
+            if (!window.nkt.disableSignal) {
+                startAskingForPreKey(e.detail.data.addr);
+            }
         });
         window.addEventListener('nktincomingdata', (e) => {
             if (e.detail.data.msgType === 'preKeyRequest') {
@@ -996,6 +1068,10 @@
         window.nkt.plugin = initPluginManager();
 
         window.nkt.preload = setInterval(()=>sendClearMessage(Math.random.toString()), 500);
+
+        // CAREFUL
+        window.nkt.disableSignal = true;
+
 
         // setDebugListeners();
 
