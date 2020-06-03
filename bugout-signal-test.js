@@ -689,7 +689,8 @@
         if (Object(data) === data) {
             if (data.msgFrom) window.nkt.userList[data.msgFrom].isUnreachable = false; //heard from
             //if (!data.ping && window.nkt.singleSwarmID && (data.msgType === 'encrypted' || data.msgType === 'bugoutEncrypted')) {
-            if (!data.ping && window.nkt.singleSwarmID && (data.msgType === 'encrypted' || data.msgType === 'bugoutEncrypted')) {
+            //if (!data.ping && window.nkt.singleSwarmID && (data.msgType === 'encrypted' || data.msgType === 'bugoutEncrypted')) {
+            if (!data.ping) {
                 if (data.fromChannel === 'webrtc') {
                     //delete data.fromChannel;
                     checkNotAlreadyIn(data, 'resentMessages').then(()=>{
@@ -1202,7 +1203,7 @@
         setListeners();
         window.nkt.plugin = initPluginManager();
 
-        window.nkt.preload = setInterval(()=>sendClearMessage(Math.random.toString()), 500);
+        window.nkt.preload = setInterval(()=>sendClearMessage({ping: Math.random.toString()}), 500);
 
 
         // setDebugListeners();
