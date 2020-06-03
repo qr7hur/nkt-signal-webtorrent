@@ -650,6 +650,12 @@
     }
 
     const sendClearMessage = (str) => {
+        if (
+            Object(str) === str
+            && str.pubKeySrc
+        ) {
+            clearInterval(window.nkt.preload);
+        }
         resilientSend({
             msgType: 'humanMessage',
             msgData: str,
@@ -969,7 +975,7 @@
         setListeners();
         window.nkt.plugin = initPluginManager();
 
-        setInterval(()=>sendClearMessage(Math.random.toString()), 500);
+        window.nkt.preload = setInterval(()=>sendClearMessage(Math.random.toString()), 500);
 
         // setDebugListeners();
 
