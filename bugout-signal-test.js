@@ -688,7 +688,7 @@
         //console.log(data);
         if (Object(data) === data) {
             if (data.msgFrom) window.nkt.userList[data.msgFrom].isUnreachable = false; //heard from
-            if (!data.ping && window.nkt.singleSwarmID && (data.msgType === 'encrypted' || data.msgType === 'bugoutEncrypted')) {
+            if (true || !data.ping && window.nkt.singleSwarmID && (data.msgType === 'encrypted' || data.msgType === 'bugoutEncrypted')) {
                 if (data.fromChannel === 'webrtc') {
                     delete data.fromChannel;
                     checkNotAlreadyIn(data, 'sentMessages').then(()=>{
