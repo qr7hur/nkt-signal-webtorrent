@@ -289,7 +289,6 @@
                         .then( () => {
                             message.fromChannel = 'websocket';
                             handleNewMessageReceived(message);
-                            resilientSend(message);
                         })
                         .catch( () => {
                             //console.log('already received');
@@ -389,7 +388,6 @@
                     }
                 }
                 handleNewMessageReceived(message);
-                resilientSend(message);
             })
             .catch( () => {
                 //console.log('already received');
@@ -533,7 +531,24 @@
     const handleNewMessageReceived = (data) => {
         //console.log('GENERIC MESSAGE : ');
         //console.log(data);
-        if (Object(data) === data && data.msgFrom) window.nkt.userList[data.msgFrom].isUnreachable = false;
+        if (Object(data) === data) {
+            if (!data.ping && window.nkt.singleSwarmID && data.msgType === 'encrypted') {
+                if (data.fromChannel === 'webrtc') {
+                    delete data.fromChannel;
+                    checkNotAlreadyIn(data, 'sentMessages').then(()=>{
+                        window.nkt.websocket.emit(window.nkt.websocketEventName, data);
+                    }).catch(()=>{});
+                } else if (data.fromChannel === 'websocket') {
+                    delete data.fromChannel;
+                    checkNotAlreadyIn(data, 'sentMessages').then(()=>{
+                        window.nkt.mySwarm.send(data);
+                    }).catch(()=>{});
+                }
+                resilientSend(message); // resend if not a ping
+            }
+            if (data.msgFrom) window.nkt.userList[data.msgFrom].isUnreachable = false; //heard from
+        }
+
         window.dispatchEvent(new CustomEvent('nktincomingdata', {
             detail: { data }
         }));
@@ -544,7 +559,7 @@
             !window.nkt.userList[forAddr]
             || window.nkt.userList[forAddr].preKey
         ) return;
-        console.log('asking for ' + forAddr + '  prekey ...');
+        //console.log('asking for ' + forAddr + '  prekey ...');
         window.nkt.userList[forAddr].preKeyRequestCount = window.nkt.userList[forAddr].preKeyRequestCount || 0;
         window.nkt.userList[forAddr].preKeyRequestCount++;
         resilientSend({
@@ -608,7 +623,7 @@
         } else if(
             Object(window.nkt.userList[forAddr]) === window.nkt.userList[forAddr]
             && window.nkt.userList[forAddr].preKey
-            && false // too much spam for now TODO : send only active peers' keys
+            //&& false // too much spam for now TODO : send only active peers' keys
         ) {//answer for others if i know ?
             resilientSend({
                 msgType: 'preKey',
