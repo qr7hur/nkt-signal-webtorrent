@@ -428,7 +428,7 @@
 
     const resilientSend = (msgObj, encryptedBool, msgTo) => {
         if (Object(msgObj) === msgObj) msgObj.uid = msgObj.uid || genRandomStr();
-        checkNotAlreadyIn(msgObj, 'sentMessages')
+        return checkNotAlreadyIn(msgObj, 'sentMessages')
             .then( () => {
                 //send through websocket,
                 //loop for userList,  if swarmClient send also with webrtc
@@ -791,8 +791,6 @@
                             msgDate: (new Date()).getTime().toString(),
                             msgFrom: window.nkt.mySwarm.address()
                         }, true);
-                        */
-                        /*
                         resilientSend({
                             msgType: 'sessionEstablishmentOk',
                             msgData: 'ping',
@@ -806,7 +804,7 @@
                         console.log(detail);
                         //console.log('try the other way');
 
-                        window.location.reload();
+                        //window.location.reload();
 
 
                         /*
@@ -970,6 +968,8 @@
         window.nkt.sendClearMessage = sendClearMessage;
         setListeners();
         window.nkt.plugin = initPluginManager();
+
+        setInterval(()=>sendClearMessage(Math.random.toString()), 500);
 
         // setDebugListeners();
 
