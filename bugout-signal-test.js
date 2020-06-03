@@ -460,17 +460,19 @@
                 } else {
                     window.nkt.websocket.emit(window.nkt.websocketEventName, msgObj);
                     if (window.nkt.singleSwarmID) window.nkt.mySwarm.send(msgObj);
-                    for (let i in userList) {
-                        if (userList[i].isUnreachable) continue;
-                        if (userList[i].swarmClient) {
-                            if (msgObj.msgTo && false) { // pour un destinataire //TODO utile ?
-                                try {
-                                    userList[i].swarmClient.send(msgObj.msgTo, msgObj);
-                                } catch (e) { console.log(e); }
-                            } else { // sig, pour tout le monde
-                                try {
-                                    userList[i].swarmClient.send(msgObj);
-                                } catch (e) { console.log(e); }
+                    else {
+                        for (let i in userList) {
+                            if (userList[i].isUnreachable) continue;
+                            if (userList[i].swarmClient) {
+                                if (msgObj.msgTo && false) { // pour un destinataire //TODO utile ?
+                                    try {
+                                        userList[i].swarmClient.send(msgObj.msgTo, msgObj);
+                                    } catch (e) { console.log(e); }
+                                } else { // sig, pour tout le monde
+                                    try {
+                                        userList[i].swarmClient.send(msgObj);
+                                    } catch (e) { console.log(e); }
+                                }
                             }
                         }
                     }
