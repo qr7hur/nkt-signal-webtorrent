@@ -289,6 +289,7 @@
                         .then( () => {
                             message.fromChannel = 'websocket';
                             handleNewMessageReceived(message);
+                            resilientSend(message);
                         })
                         .catch( () => {
                             //console.log('already received');
@@ -388,6 +389,7 @@
                     }
                 }
                 handleNewMessageReceived(message);
+                resilientSend(message);
             })
             .catch( () => {
                 //console.log('already received');
@@ -430,6 +432,7 @@
         if (Object(msgObj) === msgObj) msgObj.uid = msgObj.uid || genRandomStr();
         return checkNotAlreadyIn(msgObj, 'sentMessages')
             .then( () => {
+                //console.log('RESILIENT SEND');
                 //send through websocket,
                 //loop for userList,  if swarmClient send also with webrtc
                 const userList = window.nkt.userList;
