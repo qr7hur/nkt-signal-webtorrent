@@ -776,6 +776,7 @@
     }
 
     const answerPreKeyRequest = (fromAddr, forAddr) => {
+        console.log('ANSWERING PREKEY REQUEST')
         if (forAddr === window.nkt.mySwarm.address()) {//anwser for me
             resilientSend({
                 msgType: 'preKey',
@@ -1137,6 +1138,7 @@
                         msgBugoutEk: window.nkt.mySwarm.ek,
                         msgTo: addr
                     }, false);
+                    startAskingForPreKey(e.detail.data.msgFrom);
                 });
             }, 10000);
         }
@@ -1159,6 +1161,7 @@
                 window.nkt.userList[e.detail.data.msgFrom].preKey = null;
                 window.nkt.userList[e.detail.data.msgFrom].sessionCipher = null;
                 window.nkt.userList[e.detail.data.msgFrom].waitForPeerToDestroySession = false;
+                startAskingForPreKey(e.detail.data.msgFrom);
             }
         });
 
