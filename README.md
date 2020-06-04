@@ -42,6 +42,7 @@ node app.js
 - each peer belongs to the nkt swarm of known users
 - some peers in the swarm are reachable webrtc peers (joinable when websocket data is unreachable)
 - all messages are sent through webrtc and websocket and deduplicated
+- peers which are able to use both webrtc and websocket will be used as a bridge between peers which only have one option
 - when a peer is added to the swarm, a signal session is established with it for secure messaging (libsignal)
 - websocket, webrtc and signal connection/session establishment should be resilient to poor network
 - browser entrypoint is `bugout-signal-test.js`
