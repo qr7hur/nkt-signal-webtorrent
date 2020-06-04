@@ -75,8 +75,8 @@
 
     const signalInit = () => {
         const bobStore = window.nkt.signalStore || new libsignal.SignalProtocolStore();
-        const bobPreKeyId = 1;
-        const bobSignedKeyId = 1;
+        const bobPreKeyId = window.nkt.preKeyId++;
+        const bobSignedKeyId = window.nkt.preKeyId++;
         //const bobPreKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
         //const bobSignedKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
         if (!window.nkt.signalStore) {
@@ -100,8 +100,8 @@
         //window.nkt.userList[addr].tryingToStartSession = true;
         //if (window.nkt.userList[addr].waitingForPeerToEstablish) return;
         //const ALICE_KID = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
-        const ALICE_KID = 1;
-        const ALICE_ADDRESS = new libsignal.SignalProtocolAddress(addr, ALICE_KID);
+        const ALICE_DEVICE_ID = 1;
+        const ALICE_ADDRESS = new libsignal.SignalProtocolAddress(addr, ALICE_DEVICE_ID);
         const builder = new libsignal.SessionBuilder(window.nkt.signalStore, ALICE_ADDRESS);
         const preKeyBundle = window.nkt.userList[addr].preKey;
         const bobStore = window.nkt.signalStore;
@@ -116,8 +116,8 @@
             //const bobSessionCipher = new libsignal.SessionCipher(bobStore, ALICE_ADDRESS);
             //window.nkt.userList[addr].sessionCipher = bobSessionCipher;
             //window.nkt.userList[addr].sessionCipher = undefined;
-            const ALICE_KID = 1;
-            const ALICE_ADDRESS = new libsignal.SignalProtocolAddress(addr, ALICE_KID);
+            const ALICE_DEVICE_ID = 1;
+            const ALICE_ADDRESS = new libsignal.SignalProtocolAddress(addr, ALICE_DEVICE_ID);
             window.nkt.userList[addr].sessionCipher = new libsignal.SessionCipher(bobStore, ALICE_ADDRESS);
             window.nkt.userList[addr].sessionCipher
             .encrypt(originalMessage)
@@ -146,13 +146,15 @@
 
     const decryptPreKeyMessageFrom = (message, from) => {
         console.log('DECRYPTING')
+        /*
         if (!window.nkt.userList[from].preKey) {
             // preKey not received yet
             console.log('waiting for key');
             setTimeout(((message, from)=>()=>decryptPreKeyMessageFrom(message, from))(), 200);
         }
-        const ALICE_KID = 1;
-        const ALICE_ADDRESS = new libsignal.SignalProtocolAddress(from, ALICE_KID);
+        */
+        const ALICE_DEVICE_ID = 1;
+        const ALICE_ADDRESS = new libsignal.SignalProtocolAddress(from, ALICE_DEVICE_ID);
         const bobStore = window.nkt.signalStore; 
         const aliceSessionCipher = new libsignal.SessionCipher(bobStore, ALICE_ADDRESS);
         window.nkt.userList[from].sessionCipher = aliceSessionCipher;
@@ -1138,6 +1140,7 @@
                         msgBugoutEk: window.nkt.mySwarm.ek,
                         msgTo: addr
                     }, false);
+                    debugger;
                     startAskingForPreKey(addr);
                 });
             }, 10000);
@@ -1220,6 +1223,7 @@
             window.nkt.websocketEventName = 'corev2';
         }
         window.nkt.mySwarm = startWebRTCServer();
+        window.nkt.preKeyId = 1;
         signalInit().then((arr) => {
             let preKeyBundle = arr[0];
             let store = arr[1];
