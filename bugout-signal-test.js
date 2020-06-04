@@ -55,6 +55,7 @@
 
                 store.storePreKey(preKeyId, preKey.keyPair);
                 store.storeSignedPreKey(signedPreKeyId, signedPreKey.keyPair);
+                store.put('_signature', signedPreKey.signature);
 
                 return {
                     identityKey: identity.pubKey,
@@ -73,10 +74,47 @@
         });
     }
 
+    const generateNewPreKeyBundle = (store, preKeyId, signedPreKeyId) => {
+        return Promise.all([
+            store.getIdentityKeyPair(),
+            store.getLocalRegistrationId()
+        ]).then((result) => {
+            const identity = result[0];
+            const registrationId = result[1];
+
+            return Promise.all([
+                KeyHelper.generatePreKey(preKeyId),
+                //KeyHelper.generateSignedPreKey(identity, signedPreKeyId),
+                store.loadSignedPreKey(signedPreKeyId)
+            ]).then((keys) => {
+                const preKey = keys[0]
+                const signedPreKey = keys[1];
+
+                store.storePreKey(preKeyId, preKey.keyPair);
+                //store.storeSignedPreKey(signedPreKeyId, signedPreKey.keyPair);
+                const signature = store.get('_signature');
+
+                return {
+                    identityKey: identity.pubKey,
+                    registrationId: registrationId,
+                    preKey: {
+                        keyId: preKeyId,
+                        publicKey: preKey.keyPair.pubKey
+                    },
+                    signedPreKey: {
+                        keyId: signedPreKeyId,
+                        publicKey: signedPreKey.pubKey,
+                        signature: signature
+                    }
+                };
+            });
+        });
+    }
+
     const signalInit = () => {
-        const bobStore = window.nkt.signalStore || new libsignal.SignalProtocolStore();
-        const bobPreKeyId = window.nkt.preKeyId++;
-        const bobSignedKeyId = window.nkt.preKeyId++;
+        const bobStore = new libsignal.SignalProtocolStore();
+        const bobPreKeyId = 1;
+        const bobSignedKeyId = 1;
         //const bobPreKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
         //const bobSignedKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
         if (!window.nkt.signalStore) {
@@ -86,11 +124,6 @@
                     Promise.resolve(bobStore)
                 ]);
             });
-        } else {
-            return Promise.all([
-                generatePreKeyBundle(bobStore, bobPreKeyId, bobSignedKeyId),
-                Promise.resolve(bobStore)
-            ]);
         }
     }
 
@@ -1041,9 +1074,14 @@
 
                         
                         window.nkt.userList[detail.data.msgFrom].receivedOrderToEstablish = false;
-                        window.nkt.userList[detail.data.msgFrom].waitForPeerToDestroySession = true;
+                        //window.nkt.userList[detail.data.msgFrom].waitForPeerToDestroySession = true;// ROLLBACK
                         //window.nkt.userList[detail.data.msgFrom].useSignal = false;
-                        askPeerToDestroySession(detail.data.msgFrom);
+                        generateNewPreKeyBundle(window.nkt.signalStore, 1, 1).then((preKeyBundle) => {
+                            window.nkt.userList[detail.data.msgFrom].preKey = null;
+                            window.nkt.userList[detail.data.msgFrom].myNewPreKeyBundle = preKeyBundle;
+                            startAskingForPreKey(detail.data.msgFrom);
+                            //askPeerToDestroySession(detail.data.msgFrom);// ROLLBACK
+                        });
                         //console.log('try the other way');
 
                         //window.location.reload();
@@ -1125,13 +1163,16 @@
         const destroySession = (addr) => {
             setTimeout(()=>{
                 if (window.nkt.userList[addr].useSignal) return;
-                signalInit().then((arr) => {
-                    let preKeyBundle = arr[0];
-                    window.nkt.userList[addr].myNewPreKeyBundle = preKeyBundle;
+                //generateNewPreKeyBundle(window.nkt.signalStore, 1, 1).then((preKeyBundle) => {
+                    //console.log(window.nkt.signalStore);
+                    //window.nkt.userList[addr].myNewPreKeyBundle = preKeyBundle;
+
+                    /* ROLLBACK
                     window.nkt.signalStore.removeSession(addr + '.1');
                     window.nkt.userList[addr].receivedOrderToEstablish = false;
                     window.nkt.userList[addr].preKey = null;
                     window.nkt.userList[addr].sessionCipher = null;
+                    */
                     resilientSend({
                         msgType: 'sessionDestroyed',
                         msgDate: (new Date()).getTime().toString(),
@@ -1141,7 +1182,7 @@
                         msgTo: addr
                     }, false);
                     startAskingForPreKey(addr);
-                });
+                //});
             }, 10000);
         }
 
@@ -1158,12 +1199,15 @@
             if (e.detail.data.msgType === 'sessionDestroyed') {
                 if (e.detail.data.msgTo !== window.nkt.mySwarm.address()) return;
                 //window.nkt.signalStore.remove('identityKey' + e.detail.data.msgFrom);
+                /* ROLLBACK
                 window.nkt.signalStore.removeSession(e.detail.data.msgFrom + '.1');
                 window.nkt.userList[e.detail.data.msgFrom].receivedOrderToEstablish = false;
                 window.nkt.userList[e.detail.data.msgFrom].preKey = null;
                 window.nkt.userList[e.detail.data.msgFrom].sessionCipher = null;
                 window.nkt.userList[e.detail.data.msgFrom].waitForPeerToDestroySession = false;
                 startAskingForPreKey(e.detail.data.msgFrom);
+                */
+               
             }
         });
 
@@ -1222,7 +1266,6 @@
             window.nkt.websocketEventName = 'corev2';
         }
         window.nkt.mySwarm = startWebRTCServer();
-        window.nkt.preKeyId = 1;
         signalInit().then((arr) => {
             let preKeyBundle = arr[0];
             let store = arr[1];
