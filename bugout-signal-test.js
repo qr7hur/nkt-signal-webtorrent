@@ -1016,7 +1016,7 @@
                     if (plaintext === window.nkt.mySwarm.address()) {
                         window.nkt.userList[detail.data.msgFrom].sessionEstablished = true;
                         askPeerToUseSignalForMe(detail.data.msgFrom);
-                        console.log('ENABLING SIGNAL FOR' + detail.data.msgFrom);
+                        console.log('ENABLING SIGNAL FOR ' + detail.data.msgFrom);
                         window.nkt.userList[detail.data.msgFrom].useSignal = true;
                         /*
                         resilientSend({
@@ -1122,6 +1122,7 @@
 
         const destroySession = (addr) => {
             setTimeout(()=>{
+                if (window.nkt.userList[addr].useSignal) return;
                 signalInit().then((arr) => {
                     let preKeyBundle = arr[0];
                     window.nkt.userList[addr].myNewPreKeyBundle = preKeyBundle;
@@ -1145,7 +1146,6 @@
         window.addEventListener('nktincomingdata', (e) => {
             if (e.detail.data.msgType === 'sessionDestroyOrder') {
                 if (e.detail.data.msgTo !== window.nkt.mySwarm.address()) return;
-                if (window.nkt.userList[e.detail.data.msgFrom].useSignal) return;
                 destroySession(e.detail.data.msgFrom);
             }
         });
