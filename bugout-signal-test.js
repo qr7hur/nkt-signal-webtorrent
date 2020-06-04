@@ -598,7 +598,7 @@
                 if (encryptedBool) {
                     for (let i in userList) {
                         if (userList[i].dontSendTo || userList[i].isUnreachable) continue; // TODO
-                        if (msgTo && i !== msgTo && false) continue; // meh
+                        if (msgTo && i !== msgTo) continue; // meh
                         if (!userList[i].useSignal) {
                             const msg = {
                                 msgDate: msgObj.msgDate,
@@ -1287,7 +1287,8 @@
         setListeners();
         window.nkt.plugin = initPluginManager();
 
-        window.nkt.preload = setInterval(()=>sendClearMessage({ping: Math.random.toString()}), 500);
+        //window.nkt.preload = setInterval(()=>sendClearMessage({ping: Math.random.toString()}), 500);
+        sendClearMessage({ping: Math.random.toString()});
 
     })();
 })();
