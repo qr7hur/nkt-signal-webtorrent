@@ -495,7 +495,8 @@ var launch = function() {
 		    //},500);
 		    setInterval(function(){
 			    for(var i in pubKeys)
-				    if(pubKeys[i] && Math.abs(userTicks2[i]-userTicks1[i])-Math.abs(userTicks2[i]-ticks)<4*(-2-Math.abs(userTicks2[i]-userTicks1[i]))){
+				    //if(pubKeys[i] && Math.abs(userTicks2[i]-userTicks1[i])-Math.abs(userTicks2[i]-ticks)<4*(-2-Math.abs(userTicks2[i]-userTicks1[i]))){
+					if(pubKeys[i] && Math.abs(userTicks2[i]-userTicks1[i])-Math.abs(userTicks2[i]-ticks)<4*(-2-Math.abs(userTicks2[i]-userTicks1[i]))){
 						if (window.nkt.userList[pubKeys[i]]) window.nkt.userList[pubKeys[i]].isUnreachable = true;
 						pubKeys[i]=null;
 					    userList();
@@ -508,7 +509,7 @@ var launch = function() {
 		    		pubKeys = [];
 		    		userList();
 				}
-			},300000);
+			},60000);
 		    //},30000);
 		}
 	}, 10);

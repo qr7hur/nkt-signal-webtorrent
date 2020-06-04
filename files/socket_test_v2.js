@@ -491,12 +491,12 @@ var launch = function() {
 					pubKeySrc: pubKey
 				});
 				ticks++;
-			},2500);
+			},5000);
 		    //},500);
 		    setInterval(function(){
 			    for(var i in pubKeys)
 				    //if(pubKeys[i] && Math.abs(userTicks2[i]-userTicks1[i])-Math.abs(userTicks2[i]-ticks)<4*(-2-Math.abs(userTicks2[i]-userTicks1[i]))){
-					if(pubKeys[i] && Math.abs(userTicks2[i]-userTicks1[i])-Math.abs(userTicks2[i]-ticks)<2*(-2-Math.abs(userTicks2[i]-userTicks1[i]))){
+					if(pubKeys[i] && Math.abs(userTicks2[i]-userTicks1[i])-Math.abs(userTicks2[i]-ticks)<4*(-2-Math.abs(userTicks2[i]-userTicks1[i]))){
 						if (window.nkt.userList[pubKeys[i]]) window.nkt.userList[pubKeys[i]].isUnreachable = true;
 						pubKeys[i]=null;
 					    userList();
