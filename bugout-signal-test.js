@@ -697,7 +697,7 @@
             if (data.msgFrom) window.nkt.userList[data.msgFrom].isUnreachable = false; //heard from
             //if (!data.ping && window.nkt.singleSwarmID && (data.msgType === 'encrypted' || data.msgType === 'bugoutEncrypted')) {
             //if (!data.ping && window.nkt.singleSwarmID && (data.msgType === 'encrypted' || data.msgType === 'bugoutEncrypted')) {
-            if (!data.ping) {
+            if (!data.ping) {// BRIDGING PEERS
                 if (data.fromChannel === 'webrtc') {
                     //delete data.fromChannel;
                     checkNotAlreadyIn(data, 'resentMessages').then(()=>{
@@ -706,6 +706,8 @@
                 } else if (data.fromChannel === 'websocket') {
                     //delete data.fromChannel;
                     checkNotAlreadyIn(data, 'resentMessages').then(()=>{
+                        
+                        console.log('BRIDGING WEBSOCKET TO WEBRTC');
                         window.nkt.mySwarm.send(data);
                     }).catch(()=>{});
                 }
