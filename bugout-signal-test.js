@@ -1138,7 +1138,7 @@
                         msgBugoutEk: window.nkt.mySwarm.ek,
                         msgTo: addr
                     }, false);
-                    startAskingForPreKey(e.detail.data.msgFrom);
+                    startAskingForPreKey(addr);
                 });
             }, 10000);
         }
