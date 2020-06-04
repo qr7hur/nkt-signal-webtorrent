@@ -814,6 +814,7 @@
             Object(window.nkt.userList[addr]) === window.nkt.userList[addr]
             && (!window.nkt.userList[addr].preKey || force)
         ) {
+            if (window.nkt.userList[addr].waitForPeerToDestroySession) return;
             //window.nkt.userList[addr].receivedPreKey = true;
             window.nkt.userList[addr].preKey = preKey;
             //if (addr < window.nkt.mySwarm.address()) { // ONLY ONE OF THE TWO PEERS STARTS SESSION
