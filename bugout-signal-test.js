@@ -817,7 +817,7 @@
             //window.nkt.userList[addr].receivedPreKey = true;
             window.nkt.userList[addr].preKey = preKey;
             //if (addr < window.nkt.mySwarm.address()) { // ONLY ONE OF THE TWO PEERS STARTS SESSION
-            if (!force) {
+            if (!force && addr < window.nkt.mySwarm.address()) {
                 askPeerToReEstablishSession(addr);
             }
                 //startSignalSessionWith(addr);
