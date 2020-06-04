@@ -502,7 +502,7 @@ var launch = function() {
 					    userList();
 				    }
 				//if(!socket.connected) socket_connect();
-			},5000);
+			},2000);
 		    //},2000);
 		    setInterval(function(){
 		    	if(Math.abs(lastaction - ticks) > 50) {
