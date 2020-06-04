@@ -1140,7 +1140,6 @@
                         msgBugoutEk: window.nkt.mySwarm.ek,
                         msgTo: addr
                     }, false);
-                    debugger;
                     startAskingForPreKey(addr);
                 });
             }, 10000);
