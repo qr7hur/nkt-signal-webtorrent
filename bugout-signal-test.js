@@ -73,24 +73,31 @@
         });
     }
 
-    const signalInit = (addr) => {
-        const bobStore = new libsignal.SignalProtocolStore();
+    const signalInit = () => {
+        const bobStore = window.nkt.signalStore || new libsignal.SignalProtocolStore();
         const bobPreKeyId = 1;
         const bobSignedKeyId = 1;
         //const bobPreKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
         //const bobSignedKeyId = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
-        return generateIdentity(bobStore).then( () => {
+        if (!window.nkt.signalStore) {
+            return generateIdentity(bobStore).then( () => {
+                return Promise.all([
+                    generatePreKeyBundle(bobStore, bobPreKeyId, bobSignedKeyId),
+                    Promise.resolve(bobStore)
+                ]);
+            });
+        } else {
             return Promise.all([
                 generatePreKeyBundle(bobStore, bobPreKeyId, bobSignedKeyId),
                 Promise.resolve(bobStore)
             ]);
-        });
+        }
     }
 
     const startSignalSessionWith = (addr) => {
         if (!window.nkt.userList[addr].receivedOrderToEstablish) return;
         // || window.nkt.userList[addr].tryingToStartSession) return;
-        window.nkt.userList[addr].tryingToStartSession = true;
+        //window.nkt.userList[addr].tryingToStartSession = true;
         //if (window.nkt.userList[addr].waitingForPeerToEstablish) return;
         //const ALICE_KID = parseInt(addr.charCodeAt(0).toString() + addr.charCodeAt(1).toString(), 10);
         const ALICE_KID = 1;
@@ -773,7 +780,7 @@
         if (forAddr === window.nkt.mySwarm.address()) {//anwser for me
             resilientSend({
                 msgType: 'preKey',
-                msgData: preKeyBundleToString(window.nkt.preKeyBundle),
+                msgData: preKeyBundleToString(window.nkt.userList[fromAddr].myNewPreKeyBundle || window.nkt.preKeyBundle),
                 msgDate: (new Date()).getTime().toString(),
                 msgFrom: window.nkt.mySwarm.address(),
                 msgBugoutPk: window.nkt.mySwarm.pk,
@@ -883,7 +890,7 @@
         //if (window.nkt.userList[addr].receivedOrderToEstablish) return;
         resilientSend({
             msgType: 'sessionEstablishmentOrder',
-            msgData:  preKeyBundleToString(window.nkt.preKeyBundle),
+            msgData:  preKeyBundleToString(window.nkt.userList[addr].myNewPreKeyBundle || window.nkt.preKeyBundle),
             msgDate: (new Date()).getTime().toString(),
             msgFrom: window.nkt.mySwarm.address(),
             msgBugoutPk: window.nkt.mySwarm.pk,
@@ -996,6 +1003,8 @@
                 //if (window.nkt.userList[e.detail.data.msgFrom].pauseSessionEstablishmentParsing) return;
                 
                 //window.nkt.userList[e.detail.data.msgFrom].pauseSessionEstablishmentParsing = true;
+               if (window.nkt.userList[e.detail.data.msgFrom].waitForPeerToDestroySession) return;
+               //if (window.nkt.userList[e.detail.data.msgFrom].useSignal) return;
                 console.log('PARSING SESSION ESTABLISHMENT FROM ' + e.detail.data.msgFrom);
                 console.log(e.detail);
                 //const detail = JSON.parse(JSON.stringify(e.detail));
@@ -1027,6 +1036,12 @@
                     } else {
                         console.log('BAD SESSION ESTABLISHMENT');
                         console.log(detail);
+
+                        
+                        window.nkt.userList[e.detail.data.msgFrom].receivedOrderToEstablish = false;
+                        window.nkt.userList[e.detail.data.msgFrom].waitForPeerToDestroySession = true;
+                        window.nkt.userList[e.detail.data.msgFrom].useSignal = false;
+                        askPeerToDestroySession(detail.data.msgFrom);
                         //console.log('try the other way');
 
                         //window.location.reload();
@@ -1105,35 +1120,47 @@
             }
         });
 
-        /*
+        const destroySession = (addr) => {
+            setTimeout(()=>{
+                signalInit().then((arr) => {
+                    let preKeyBundle = arr[0];
+                    window.nkt.userList[addr].myNewPreKeyBundle = preKeyBundle;
+                    window.nkt.signalStore.removeSession(addr + '.1');
+                    window.nkt.userList[addr].receivedOrderToEstablish = false;
+                    window.nkt.userList[addr].preKey = null;
+                    window.nkt.userList[addr].sessionCipher = null;
+                    resilientSend({
+                        msgType: 'sessionDestroyed',
+                        msgDate: (new Date()).getTime().toString(),
+                        msgFrom: window.nkt.mySwarm.address(),
+                        msgBugoutPk: window.nkt.mySwarm.pk,
+                        msgBugoutEk: window.nkt.mySwarm.ek,
+                        msgTo: addr
+                    }, false);
+                });
+            }, 10000);
+        }
+
+        
         window.addEventListener('nktincomingdata', (e) => {
             if (e.detail.data.msgType === 'sessionDestroyOrder') {
                 if (e.detail.data.msgTo !== window.nkt.mySwarm.address()) return;
-                window.nkt.signalStore.removeSession(e.detail.data.msgFrom + '.1');
-                //window.nkt.userList[e.detail.data.msgFrom].sessionCipher = null;
-                console.log('SESSION DESTROYED');
-                setTimeout(()=>{
-                    resilientSend({
-                        msgType: 'sessionDestroyed',
-                        msgFrom: window.nkt.mySwarm.address(),
-                        msgTo: e.detail.data.msgFrom,
-                        msgDate: (new Date()).getTime().toString()
-                    }, false);
-                }, 5000);
+                destroySession(e.detail.data.msgFrom);
             }
         });
+
 
         window.addEventListener('nktincomingdata', (e) => {
             if (e.detail.data.msgType === 'sessionDestroyed') {
                 if (e.detail.data.msgTo !== window.nkt.mySwarm.address()) return;
-                console.log('ASKING FOR PEER TO REESTABLISH');
-                //askPeerToReEstablishSession(e.detail.data.msgFrom);
-                setTimeout(()=>{
-                    startSignalSessionWith(e.detail.data.msgFrom);
-                }, 5000);
+                //window.nkt.signalStore.remove('identityKey' + e.detail.data.msgFrom);
+                window.nkt.signalStore.removeSession(e.detail.data.msgFrom + '.1');
+                window.nkt.userList[e.detail.data.msgFrom].receivedOrderToEstablish = false;
+                window.nkt.userList[e.detail.data.msgFrom].preKey = null;
+                window.nkt.userList[e.detail.data.msgFrom].sessionCipher = null;
+                window.nkt.userList[e.detail.data.msgFrom].waitForPeerToDestroySession = false;
             }
         });
-        */
 
         /*
         
@@ -1190,7 +1217,7 @@
             window.nkt.websocketEventName = 'corev2';
         }
         window.nkt.mySwarm = startWebRTCServer();
-        signalInit(window.nkt.mySwarm.address()).then((arr) => {
+        signalInit().then((arr) => {
             let preKeyBundle = arr[0];
             let store = arr[1];
             window.nkt.signalStore = store;
