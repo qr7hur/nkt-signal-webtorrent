@@ -138,12 +138,12 @@
         const builder = new libsignal.SessionBuilder(window.nkt.signalStore, ALICE_ADDRESS);
         const preKeyBundle = window.nkt.userList[addr].preKey;
         const bobStore = window.nkt.signalStore;
-        console.log('starting signal session with ' + addr);
+        logIfVerbose('starting signal session with ' + addr);
         if (!window.nkt.userList[addr]) return;
         //if (window.nkt.userList[addr].gotOk) return;
         //window.nkt.signalStore.removeSession(addr + '.1');
         return builder.processPreKey(preKeyBundle).then(((addr)=> () => {
-            //console.log('HERE');
+            //logIfVerbose('HERE');
             //if (window.nkt.userList[addr].sessionEstablished) return;
             const originalMessage = utf8_to_b64(addr); // for double check on arrival
             //const bobSessionCipher = new libsignal.SessionCipher(bobStore, ALICE_ADDRESS);
@@ -155,11 +155,11 @@
             window.nkt.userList[addr].sessionCipher
             .encrypt(originalMessage)
             .then((ciphertext) => {
-                //console.log('ciphertext');
-                //console.log(ciphertext);
+                //logIfVerbose('ciphertext');
+                //logIfVerbose(ciphertext);
                 //window.nkt.userList[addr].sessionCipher = bobSessionCipher;
                 //window.nkt.userList[addr].keepSendingSessionEstablishment = setInterval(()=> {
-                console.log('sending establishment');
+                logIfVerbose('sending establishment');
                 resilientSend({
                     msgType: 'sessionEstablishment',
                     msgData: ciphertext.body,
@@ -173,16 +173,16 @@
                 //window.nkt.userList[addr].receivedOrderToEstablish = false;
                 //}, 1000);
                 //setTimeout(() => window.nkt.userList[addr].sessionError = false, 5000);
-            }).catch((err) => { console.log('encrypt err'); console.log(err); });
-        })(addr)).catch( (err) => { console.log('ERROR IN startsignalsession'); console.log(err); });
+            }).catch((err) => { logIfVerbose('encrypt err'); logIfVerbose(err); });
+        })(addr)).catch( (err) => { logIfVerbose('ERROR IN startsignalsession'); logIfVerbose(err); });
     }
 
     const decryptPreKeyMessageFrom = (message, from) => {
-        console.log('DECRYPTING')
+        logIfVerbose('DECRYPTING');
         /*
         if (!window.nkt.userList[from].preKey) {
             // preKey not received yet
-            console.log('waiting for key');
+            logIfVerbose('waiting for key');
             setTimeout(((message, from)=>()=>decryptPreKeyMessageFrom(message, from))(), 200);
         }
         */
@@ -195,21 +195,21 @@
                 .decryptPreKeyWhisperMessage(message, 'binary')
                 .then(plaintext => Promise.resolve(b64_to_utf8(signalUtil.toString(plaintext))))
                 .catch(err => {
-                    console.log('decryptPreKeyWhisperMessage error');
-                    console.log(err);
+                    logIfVerbose('decryptPreKeyWhisperMessage error');
+                    logIfVerbose(err);
                     /*
                     if (
                         !window.nkt.userList[from].sessionEstablished
                         || window.nkt.userList[from].gotOk
                     ) return;
-                    console.log('decryptPreKeyMessageError');
-                    console.log(err);
+                    logIfVerbose('decryptPreKeyMessageError');
+                    logIfVerbose(err);
                     */
                     //if (window.nkt.userList[from].sessionError) return;
                     
                     //if (window.nkt.userList[from].gotOk) return;
                     
-                    //console.log('trying to start new session');
+                    //logIfVerbose('trying to start new session');
                     //window.nkt.userList[from].sessionError = true;
                     //clearInterval(window.nkt.userList[from].keepSendingSessionEstablishment);
                     // PISTE
@@ -231,33 +231,33 @@
                     .decryptWhisperMessage(message, 'binary')
                     .then(plaintext => Promise.resolve(b64_to_utf8(signalUtil.toString(plaintext))))
                     .catch(err => {
-                        console.log('decryptWhisperMessage error');
-                        console.log(err);
+                        logIfVerbose('decryptWhisperMessage error');
+                        logIfVerbose(err);
                         //if (window.nkt.userList[from].sessionError) return;
                         
                         //if (window.nkt.userList[from].gotOk) return;
                         /*
-                        console.log('trying to start new session');
+                        logIfVerbose('trying to start new session');
                         window.nkt.userList[from].sessionError = true;
                         clearInterval(window.nkt.userList[from].keepSendingSessionEstablishment);
                         startSignalSessionWith(from);
                         
-                        console.log('decryptMessageError');
-                        console.log(err);
+                        logIfVerbose('decryptMessageError');
+                        logIfVerbose(err);
                         window.nkt.userList[from].tryingToStartSession = false;
                         startSignalSessionWith(from);
                         */
                     })
             );
         } else {
-            console.log('received non prekey message but got no session yet');
+            logIfVerbose('received non prekey message but got no session yet');
             //startSignalSessionWith(from);
             return Promise.reject();
         }
     }
 
     const encryptMessageTo = (message, to) => {
-        // console.log('encrypting for ' + to);
+        // logIfVerbose('encrypting for ' + to);
         const bobSessionCipher = window.nkt.userList[to].sessionCipher;
         if (!bobSessionCipher) {
             return Promise.reject('no session yet');
@@ -273,13 +273,13 @@
             handleMessageFromSwarm(address, message);
         });
         b.on('seen', (addr)=>{
-            console.log('RTC SEEN');
-            console.log(addr);
+            logIfVerbose('RTC SEEN');
+            logIfVerbose(addr);
             window.dispatchEvent(new CustomEvent('nktwebrtcseen', { detail: addr }));
         });
         b.on('left', (addr)=>{
-            console.log('RTC LEFT');
-            console.log(addr);
+            logIfVerbose('RTC LEFT');
+            logIfVerbose(addr);
             window.dispatchEvent(new CustomEvent('nktwebrtcleft', { detail: addr }));
         });
         return b;
@@ -291,7 +291,7 @@
         const b = new Bugout(addr, { "announce": window.nkt.trackers });
         // Successfully joined user's swarm
         b.on('server', (address) => {
-            console.log('swarm ' + addr + ' joined');
+            logIfVerbose('swarm ' + addr + ' joined');
             window.nkt.userList[addr].swarmClient = b;
         });
         // Retry after some time in case of failure
@@ -307,7 +307,7 @@
                         b.close()
                     }
                 }, 5000 * (window.nkt.userList[addr].swarmConnectionTrials || 1));
-                //console.log('retry');
+                //logIfVerbose('retry');
                 startWebRTCClient(addr);
             }
         }, 5000);
@@ -339,7 +339,7 @@
                             ) {
                                 message = bugoutDecrypt(window.nkt.mySwarm, message.msgData);
                                 if (!message) {
-                                    console.log('bugout decrypt failed');
+                                    logIfVerbose('bugout decrypt failed');
                                     return;
                                 }
                             }
@@ -347,7 +347,7 @@
                             handleNewMessageReceived(message);
                         })
                         .catch( () => {
-                            //console.log('already received');
+                            //logIfVerbose('already received');
                             //do nothing
                         })
                     break;
@@ -369,7 +369,7 @@
         window.dispatchEvent(new CustomEvent('nktnewpeer', {
             detail: { data: { addr: swarmAddr } }
         }));
-        //console.log('joining new swarm ' + swarmAddr);
+        //logIfVerbose('joining new swarm ' + swarmAddr);
         //startWebRTCClient(swarmAddr);
     }
 
@@ -439,8 +439,8 @@
     
 
     const handleMessageFromSwarm = (address, message) => {
-        //console.log('RECEIVED MESSAGE FROM SWARM');
-        //console.log(message);
+        //logIfVerbose('RECEIVED MESSAGE FROM SWARM');
+        //logIfVerbose(message);
         if (Object(message) === message && message.msgFrom) {
             setClientAddressForSwarmPeer(address, message.msgFrom, message.msgBugoutPk, message.msgBugoutEk);
         }
@@ -450,13 +450,13 @@
                 if (message.msgType === 'newSwarmAddress') { // for me
                     if (!window.nkt.singleSwarmID) {
                         if (!window.nkt.userList[message.msgFrom].swarmClient) {
-                            console.log('HEARING FROM SOMEONE IM NOT CONNECTED TO WEBRTC');
+                            logIfVerbose('HEARING FROM SOMEONE IM NOT CONNECTED TO WEBRTC');
                             //startWebRTCClient(message.msgFrom);
                         }
                     }
                     if (!window.nkt.userList[message.msgFrom].sessionEstablished) {
                         /*
-                        console.log('HEARING FROM SOMEONE IM NOT CONNECTED TO SIGNAL');
+                        logIfVerbose('HEARING FROM SOMEONE IM NOT CONNECTED TO SIGNAL');
                         startAskingForPreKey({
                             detail: { data: {addr: message.msgFrom} }
                         });*/
@@ -465,7 +465,7 @@
                 handleNewMessageReceived(message);
             })
             .catch( () => {
-                //console.log('already received');
+                //logIfVerbose('already received');
                 //do nothing
             });
 /*
@@ -489,7 +489,7 @@
                             try {
                                 userList[i].swarmClient.send(message);
                             } catch(e) {
-                                // console.log(e);
+                                // logIfVerbose(e);
                             }
                         }
                     */
@@ -542,7 +542,7 @@
         // if this is an encrypted packet first try to decrypt it
         if (unpacked.e && unpacked.n && unpacked.ek) {
             var ek = unpacked.ek.toString();
-            //console.log("message encrypted by", ek, unpacked);
+            //logIfVerbose("message encrypted by", ek, unpacked);
             var decrypted = nacl.box.open(unpacked.e, unpacked.n, bs58.decode(ek), bugout.keyPairEncrypt.secretKey);
             if (decrypted) {
                 unpacked = bencode.decode(decrypted);
@@ -552,35 +552,35 @@
         }
         // if there's no data decryption failed
         if (unpacked && unpacked.p) {
-            //console.log("unpacked message", unpacked);
+            //logIfVerbose("unpacked message", unpacked);
             var packet = bencode.decode(unpacked.p);
             var pk = packet.pk.toString();
             var id = packet.i.toString();
             var checksig = nacl.sign.detached.verify(unpacked.p, unpacked.s, bs58.decode(pk));
             var checkid = id == bugout.identifier;
             var checktime = true;
-            //console.log("packet", packet);
+            //logIfVerbose("packet", packet);
             if (checksig && checkid && checktime) {
                 // message is authenticated
                 var ek = packet.ek.toString();
                 // check packet types
-                //console.log("message", bugout.identifier, packet);
+                //logIfVerbose("message", bugout.identifier, packet);
                 var messagestring = packet.v.toString();
-                //console.log('MESSAGE STRING',messagestring)
+                //logIfVerbose('MESSAGE STRING',messagestring)
                 var messagejson = null;
                 try {
                     var messagejson = JSON.parse(messagestring);
                 } catch(e) {
-                    console.log("Malformed message JSON: " + messagestring);
+                    logIfVerbose("Malformed message JSON: " + messagestring);
                 }
                 if (messagejson) {
                     return messagejson;
                 }
             } else {
-                console.log("dropping bad packet", checksig, checkid, checktime);
+                logIfVerbose("dropping bad packet", checksig, checkid, checktime);
             }
         } else {
-            console.log("skipping packet with no payload", unpacked);
+            logIfVerbose("skipping packet with no payload", unpacked);
         }
         // forward first-seen message to all connected wires
         // TODO: block flooders
@@ -591,7 +591,7 @@
         if (Object(msgObj) === msgObj) msgObj.uid = msgObj.uid || genRandomStr();
         return checkNotAlreadyIn(msgObj, 'sentMessages')
             .then( () => {
-                //console.log('RESILIENT SEND');
+                //logIfVerbose('RESILIENT SEND');
                 //send through websocket,
                 //loop for userList,  if swarmClient send also with webrtc
                 const userList = window.nkt.userList;
@@ -648,8 +648,8 @@
                             if (window.nkt.singleSwarmID) window.nkt.mySwarm.send(msg);
                         }).catch((err) => {
                             if (window.nkt.userList[i].sessionCipher) {
-                                console.log('error sending encrypted msg');
-                                console.log(err);
+                                logIfVerbose('error sending encrypted msg');
+                                logIfVerbose(err);
                             }
                         });
                     }
@@ -663,11 +663,11 @@
                                 if (msgObj.msgTo && false) { // pour un destinataire //TODO utile ?
                                     try {
                                         userList[i].swarmClient.send(msgObj.msgTo, msgObj);
-                                    } catch (e) { console.log(e); }
+                                    } catch (e) { logIfVerbose(e); }
                                 } else { // sig, pour tout le monde
                                     try {
                                         userList[i].swarmClient.send(msgObj);
-                                    } catch (e) { console.log(e); }
+                                    } catch (e) { logIfVerbose(e); }
                                 }
                             }
                         }
@@ -678,7 +678,7 @@
                 if (err) {
                     console.error(err);
                 }
-                //console.log('already sent');
+                //logIfVerbose('already sent');
                 // do nothing
             });
     }
@@ -690,8 +690,8 @@
             || !msgObj.uid
         ) {
             if (!msgObj.uid) {
-                console.log(arrayName + ' NO UID IN');
-                console.log(msgObj);
+                logIfVerbose(arrayName + ' NO UID IN');
+                logIfVerbose(msgObj);
                 return Promise.reject();
             }
             addToMessageArray(msgObj.uid, arrayName);
@@ -701,8 +701,8 @@
         /*
         return hashMessageObject(msgObj).then( (hashBuffer) => {
             let const = toHexString(new Uint8Array(hashBuffer));
-            //console.log('checking not already in')
-            //console.log(str);
+            //logIfVerbose('checking not already in')
+            //logIfVerbose(str);
             if (window.nkt[arrayName].indexOf(str) === -1) {
                 addToMessageArray(str, arrayName);
                 return Promise.resolve();
@@ -725,8 +725,8 @@
     }
 
     const handleNewMessageReceived = (data) => {
-        //console.log('GENERIC MESSAGE : ');
-        //console.log(data);
+        //logIfVerbose('GENERIC MESSAGE : ');
+        //logIfVerbose(data);
         if (Object(data) === data) {
             if (data.msgFrom) window.nkt.userList[data.msgFrom].isUnreachable = false; //heard from
             //if (!data.ping && window.nkt.singleSwarmID && (data.msgType === 'encrypted' || data.msgType === 'bugoutEncrypted')) {
@@ -757,7 +757,7 @@
             || window.nkt.userList[forAddr].preKey
             //|| window.nkt.userList[forAddr].isUnreachable
         ) return;
-        //console.log('asking for ' + forAddr + '  prekey ...');
+        //logIfVerbose('asking for ' + forAddr + '  prekey ...');
         window.nkt.userList[forAddr].preKeyRequestCount = window.nkt.userList[forAddr].preKeyRequestCount || 0;
         window.nkt.userList[forAddr].preKeyRequestCount++;
         resilientSend({
@@ -812,7 +812,7 @@
     }
 
     const answerPreKeyRequest = (fromAddr, forAddr) => {
-        console.log('ANSWERING PREKEY REQUEST')
+        logIfVerbose('ANSWERING PREKEY REQUEST')
         if (forAddr === window.nkt.mySwarm.address()) {//anwser for me
             resilientSend({
                 msgType: 'preKey',
@@ -843,9 +843,9 @@
     const savePreKeyAnswer = (e, force) => {
         const preKey = stringToPreKeyBundle(e.detail.data.msgData);
         const addr = e.detail.data.msgFrom;
-        //console.log('RECEIVED PREKEY');
-        //console.log(preKey);
-        //console.log(window.nkt.userList[addr]);
+        //logIfVerbose('RECEIVED PREKEY');
+        //logIfVerbose(preKey);
+        //logIfVerbose(window.nkt.userList[addr]);
         //clearTimeout(window.nkt.userList[addr].askingForPreKeyTimeout);
         if (
             Object(window.nkt.userList[addr]) === window.nkt.userList[addr]
@@ -916,7 +916,7 @@
                     document.getElementById('chat').appendChild(pre);
                 },
                 nktsendingmessage: (event) => {
-                    console.log('sending ' + event.detail)
+                    logIfVerbose('sending ' + event.detail)
                 }
             }
         });
@@ -988,8 +988,8 @@
                     const msg = JSON.parse(plaintext);
                     if (msg.msgType !== 'humanMessage') return;
                     window.dispatchEvent(new CustomEvent('nktencryptedmessagereceived', { detail: msg.msgData }));
-                } catch (e) { console.log(e); }
-            }).catch(err => console.log(err))
+                } catch (e) { logIfVerbose(e); }
+            }).catch(err => logIfVerbose(err))
         });
 
         window.addEventListener('nktincomingdata', (e) => {
@@ -1041,18 +1041,18 @@
                 //window.nkt.userList[e.detail.data.msgFrom].pauseSessionEstablishmentParsing = true;
                //if (window.nkt.userList[e.detail.data.msgFrom].useSignal) return;
                 if (window.nkt.userList[e.detail.data.msgFrom].receivedOrderToEstablish) return;
-                console.log('PARSING SESSION ESTABLISHMENT FROM ' + e.detail.data.msgFrom);
-                console.log(e.detail);
+                logIfVerbose('PARSING SESSION ESTABLISHMENT FROM ' + e.detail.data.msgFrom);
+                logIfVerbose(e.detail);
                 //const detail = JSON.parse(JSON.stringify(e.detail));
                 const detail = e.detail;
                 (detail => {
                     decryptMessageFrom(detail.data.msgData, detail.data.msgFrom, detail.data.msgCipherType).then((plaintext) => {
-                    console.log('decrypted session establishment :');
-                    console.log(plaintext);
+                    logIfVerbose('decrypted session establishment :');
+                    logIfVerbose(plaintext);
                     if (plaintext === window.nkt.mySwarm.address()) {
                         window.nkt.userList[detail.data.msgFrom].sessionEstablished = true;
                         askPeerToUseSignalForMe(detail.data.msgFrom);
-                        console.log('ENABLING SIGNAL FOR ' + detail.data.msgFrom);
+                        logIfVerbose('ENABLING SIGNAL FOR ' + detail.data.msgFrom);
                         window.nkt.userList[detail.data.msgFrom].useSignal = true;
                         /*
                         resilientSend({
@@ -1070,8 +1070,8 @@
                         }, false);
                         */
                     } else {
-                        console.log('BAD SESSION ESTABLISHMENT');
-                        console.log(detail);
+                        logIfVerbose('BAD SESSION ESTABLISHMENT');
+                        logIfVerbose(detail);
 
                         
                         window.nkt.userList[detail.data.msgFrom].receivedOrderToEstablish = false;
@@ -1083,7 +1083,7 @@
                             startAskingForPreKey(detail.data.msgFrom);
                             //askPeerToDestroySession(detail.data.msgFrom);// ROLLBACK
                         });
-                        //console.log('try the other way');
+                        //logIfVerbose('try the other way');
 
                         //window.location.reload();
 
@@ -1113,14 +1113,14 @@
                             window.nkt.userList[detail.data.msgFrom].waitingForPeerToEstablish = true;
                             setTimeout(()=>{
                                 if (!window.nkt.userList[detail.data.msgFrom].sessionEstablished) {
-                                        console.log('asking '+ detail.data.msgFrom +' to reestablish session')
+                                        logIfVerbose('asking '+ detail.data.msgFrom +' to reestablish session')
                                         askPeerToReEstablishSession(detail.data.msgFrom);
                                     }
                             }, 100);
-                            //console.log('prekey known for peer is');
-                            //console.log(window.nkt.userList[e.detail.data.msgFrom].preKey);
-                            //console.log('my prekey is');
-                            //console.log(window.nkt.preKeyBundle);
+                            //logIfVerbose('prekey known for peer is');
+                            //logIfVerbose(window.nkt.userList[e.detail.data.msgFrom].preKey);
+                            //logIfVerbose('my prekey is');
+                            //logIfVerbose(window.nkt.preKeyBundle);
                             //clearInterval(window.nkt.userList[e.detail.data.msgFrom].keepSendingSessionEstablishment);
                             //startSignalSessionWith(e.detail.data.msgFrom);
                             
@@ -1129,8 +1129,8 @@
                         */
                     }
                 }).catch((err) => {
-                    console.log('CANNOT DECRYPT SESSION ESTABLISHMENT');
-                    console.log(err);
+                    logIfVerbose('CANNOT DECRYPT SESSION ESTABLISHMENT');
+                    logIfVerbose(err);
                     /*
                     window.nkt.userList[e.detail.data.msgFrom].pauseSessionEstablishmentParsing = false;
                     clearInterval(window.nkt.userList[e.detail.data.msgFrom].keepSendingSessionEstablishment);
@@ -1145,7 +1145,7 @@
             if (e.detail.data.msgType === 'sessionEstablishmentOrder') {// && false) { // nope (MAC ERROR)
                 if (e.detail.data.msgTo !== window.nkt.mySwarm.address()) return;
                 //if (window.nkt.userList[e.detail.data.msgFrom].gotOk) return;
-                console.log('RECEIVED ORDER TO REESTABLISH');
+                logIfVerbose('RECEIVED ORDER TO REESTABLISH');
                 window.nkt.userList[e.detail.data.msgFrom].receivedOrderToEstablish = true;
                 //clearInterval(window.nkt.userList[e.detail.data.msgFrom].keepSendingSessionEstablishment);
                 savePreKeyAnswer(e, true);
@@ -1156,7 +1156,7 @@
         window.addEventListener('nktincomingdata', (e) => {
             if (e.detail.data.msgType === 'signalEnableOrder') {
                 if (e.detail.data.msgTo !== window.nkt.mySwarm.address()) return;
-                console.log('ENABLING SIGNAL FOR' + e.detail.data.msgFrom);
+                logIfVerbose('ENABLING SIGNAL FOR' + e.detail.data.msgFrom);
                 window.nkt.userList[e.detail.data.msgFrom].useSignal = true;
             }
         });
@@ -1165,7 +1165,7 @@
             setTimeout(()=>{
                 if (window.nkt.userList[addr].useSignal) return;
                 //generateNewPreKeyBundle(window.nkt.signalStore, 1, 1).then((preKeyBundle) => {
-                    //console.log(window.nkt.signalStore);
+                    //logIfVerbose(window.nkt.signalStore);
                     //window.nkt.userList[addr].myNewPreKeyBundle = preKeyBundle;
 
                     /* ROLLBACK
@@ -1218,7 +1218,7 @@
             if (e.detail.data.msgType === 'sessionEstablishmentOk') {
                 if (e.detail.data.msgTo !== window.nkt.mySwarm.address()) return;
                 if (window.nkt.userList[e.detail.data.msgFrom].gotOk) return;
-                console.log('GOT OK FROM ' + e.detail.data.msgFrom);
+                logIfVerbose('GOT OK FROM ' + e.detail.data.msgFrom);
                 window.nkt.userList[e.detail.data.msgFrom].pauseSessionEstablishmentParsing = true;
                 //clearInterval(window.nkt.userList[e.detail.data.msgFrom].keepSendingSessionEstablishment);
                 window.nkt.userList[e.detail.data.msgFrom].gotOk = true;
@@ -1246,6 +1246,12 @@
         };
     }
 
+    const logIfVerbose = (msg) => {
+        if (window.nktVerbose) {
+            console.log(msg);
+        }
+    }
+
     ; ( () => {
         window.nkt = {};
         window.nkt.singleSwarmID = "nktRYLi0Sn7BEQSPfo3KOiewur1gec";
@@ -1262,6 +1268,7 @@
             window.nkt.trackers.push("ws://localhost:8000");
             window.nkt.websocket = io('http://localhost:3000');
             window.nkt.websocketEventName = 'nkt';
+            window.nktVerbose = true;
         } else {
             window.nkt.websocket = io("wss://" + window.location.hostname);
             window.nkt.websocketEventName = 'corev2';
@@ -1281,9 +1288,6 @@
         window.nkt.plugin = initPluginManager();
 
         window.nkt.preload = setInterval(()=>sendClearMessage({ping: Math.random.toString()}), 500);
-
-
-        // setDebugListeners();
 
     })();
 })();
