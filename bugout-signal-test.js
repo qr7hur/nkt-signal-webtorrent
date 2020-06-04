@@ -789,7 +789,7 @@
         } else if(
             Object(window.nkt.userList[forAddr]) === window.nkt.userList[forAddr]
             && window.nkt.userList[forAddr].preKey
-            && false // too much spam for now TODO : send only active peers' keys + not necessarily using same prekey
+            //&& false // too much spam for now TODO : send only active peers' keys + not necessarily using same prekey
         ) {//answer for others if i know ?
             resilientSend({
                 msgType: 'preKey',
