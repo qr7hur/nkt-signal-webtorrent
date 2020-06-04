@@ -789,7 +789,7 @@
         } else if(
             Object(window.nkt.userList[forAddr]) === window.nkt.userList[forAddr]
             && window.nkt.userList[forAddr].preKey
-            //&& false // too much spam for now TODO : send only active peers' keys
+            && false // too much spam for now TODO : send only active peers' keys + not necessarily using same prekey
         ) {//answer for others if i know ?
             resilientSend({
                 msgType: 'preKey',
@@ -814,7 +814,7 @@
             Object(window.nkt.userList[addr]) === window.nkt.userList[addr]
             && (!window.nkt.userList[addr].preKey || force)
         ) {
-            window.nkt.userList[addr].receivedPreKey = true;
+            //window.nkt.userList[addr].receivedPreKey = true;
             window.nkt.userList[addr].preKey = preKey;
             //if (addr < window.nkt.mySwarm.address()) { // ONLY ONE OF THE TWO PEERS STARTS SESSION
             if (!force) {
