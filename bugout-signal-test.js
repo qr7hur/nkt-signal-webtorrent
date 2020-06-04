@@ -755,6 +755,7 @@
         if (
             !window.nkt.userList[forAddr]
             || window.nkt.userList[forAddr].preKey
+            || window.nkt.userList[forAddr].isUnreachable
         ) return;
         //console.log('asking for ' + forAddr + '  prekey ...');
         window.nkt.userList[forAddr].preKeyRequestCount = window.nkt.userList[forAddr].preKeyRequestCount || 0;
