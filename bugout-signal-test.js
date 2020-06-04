@@ -1038,9 +1038,9 @@
                         console.log(detail);
 
                         
-                        window.nkt.userList[e.detail.data.msgFrom].receivedOrderToEstablish = false;
-                        window.nkt.userList[e.detail.data.msgFrom].waitForPeerToDestroySession = true;
-                        window.nkt.userList[e.detail.data.msgFrom].useSignal = false;
+                        window.nkt.userList[detail.data.msgFrom].receivedOrderToEstablish = false;
+                        window.nkt.userList[detail.data.msgFrom].waitForPeerToDestroySession = true;
+                        window.nkt.userList[detail.data.msgFrom].useSignal = false;
                         askPeerToDestroySession(detail.data.msgFrom);
                         //console.log('try the other way');
 
