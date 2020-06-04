@@ -1002,6 +1002,7 @@
                 
                 //window.nkt.userList[e.detail.data.msgFrom].pauseSessionEstablishmentParsing = true;
                //if (window.nkt.userList[e.detail.data.msgFrom].useSignal) return;
+                if (window.nkt.userList[e.detail.data.msgFrom].receivedOrderToEstablish) return;
                 console.log('PARSING SESSION ESTABLISHMENT FROM ' + e.detail.data.msgFrom);
                 console.log(e.detail);
                 //const detail = JSON.parse(JSON.stringify(e.detail));
