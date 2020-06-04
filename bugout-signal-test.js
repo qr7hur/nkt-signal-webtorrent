@@ -96,7 +96,6 @@
 
     const startSignalSessionWith = (addr) => {
         if (!window.nkt.userList[addr].receivedOrderToEstablish) return;
-        if (window.nkt.userList[addr].waitForPeerToEstablishSession) return;
         // || window.nkt.userList[addr].tryingToStartSession) return;
         //window.nkt.userList[addr].tryingToStartSession = true;
         //if (window.nkt.userList[addr].waitingForPeerToEstablish) return;
@@ -820,7 +819,6 @@
             //if (addr < window.nkt.mySwarm.address()) { // ONLY ONE OF THE TWO PEERS STARTS SESSION
             if (!force) {
                 askPeerToReEstablishSession(addr);
-                window.nkt.userList[addr].waitForPeerToEstablishSession = true;
             }
                 //startSignalSessionWith(addr);
             //}
@@ -887,7 +885,7 @@
     }
 
     const askPeerToReEstablishSession = (addr) => {
-        //if (window.nkt.userList[addr].receivedOrderToEstablish) return;
+        if (window.nkt.userList[addr].receivedOrderToEstablish) return;
         resilientSend({
             msgType: 'sessionEstablishmentOrder',
             msgData:  preKeyBundleToString(window.nkt.userList[addr].myNewPreKeyBundle || window.nkt.preKeyBundle),
@@ -1003,11 +1001,9 @@
                 //if (window.nkt.userList[e.detail.data.msgFrom].pauseSessionEstablishmentParsing) return;
                 
                 //window.nkt.userList[e.detail.data.msgFrom].pauseSessionEstablishmentParsing = true;
-               if (window.nkt.userList[e.detail.data.msgFrom].waitForPeerToDestroySession) return;
                //if (window.nkt.userList[e.detail.data.msgFrom].useSignal) return;
                 console.log('PARSING SESSION ESTABLISHMENT FROM ' + e.detail.data.msgFrom);
                 console.log(e.detail);
-                window.nkt.userList[e.detail.data.msgFrom].waitForPeerToEstablishSession = false;
                 //const detail = JSON.parse(JSON.stringify(e.detail));
                 const detail = e.detail;
                 (detail => {
