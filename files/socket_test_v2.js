@@ -490,23 +490,27 @@ var launch = function() {
 					nickSrc: btoa(myNick),
 					pubKeySrc: pubKey
 				});
-			    ticks++;
-		    },500);
+				ticks++;
+			},2500);
+		    //},500);
 		    setInterval(function(){
 			    for(var i in pubKeys)
-				    if(pubKeys[i] && Math.abs(userTicks2[i]-userTicks1[i])-Math.abs(userTicks2[i]-ticks)<4*(-2-Math.abs(userTicks2[i]-userTicks1[i]))){
+				    //if(pubKeys[i] && Math.abs(userTicks2[i]-userTicks1[i])-Math.abs(userTicks2[i]-ticks)<4*(-2-Math.abs(userTicks2[i]-userTicks1[i]))){
+					if(pubKeys[i] && Math.abs(userTicks2[i]-userTicks1[i])-Math.abs(userTicks2[i]-ticks)<2*(-2-Math.abs(userTicks2[i]-userTicks1[i]))){
 						if (window.nkt.userList[pubKeys[i]]) window.nkt.userList[pubKeys[i]].isUnreachable = true;
 						pubKeys[i]=null;
 					    userList();
 				    }
 				//if(!socket.connected) socket_connect();
-		    },2000);
+			},5000);
+		    //},2000);
 		    setInterval(function(){
 		    	if(Math.abs(lastaction - ticks) > 50) {
 		    		pubKeys = [];
 		    		userList();
-		    	}
-		    },30000);
+				}
+			},60000);
+		    //},30000);
 		}
 	}, 10);
 	
