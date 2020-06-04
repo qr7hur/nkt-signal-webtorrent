@@ -338,7 +338,8 @@
         //startWebRTCClient(swarmAddr);
     }
 
-    const setClientAddressForSwarmPeer = (userId, addr, bugoutPk, bugoutEk) => {
+    //const setClientAddressForSwarmPeer = (userId, addr, bugoutPk, bugoutEk) => {
+    const setClientAddressForSwarmPeer = (addr, userId, bugoutPk, bugoutEk) => {
         if (userId === window.nkt.mySwarm.address()) return;
         if (!window.nkt.userList[userId]) {
             window.nkt.userList[userId] = {};
@@ -406,9 +407,7 @@
         //console.log('RECEIVED MESSAGE FROM SWARM');
         //console.log(message);
         if (Object(message) === message && message.msgFrom) {
-            for (let addr of address.split(',')) {
-                setClientAddressForSwarmPeer(addr, message.msgFrom, message.msgBugoutPk, message.msgBugoutEk);
-            }
+            setClientAddressForSwarmPeer(address, message.msgFrom, message.msgBugoutPk, message.msgBugoutEk);
         }
         checkNotAlreadyIn(message, 'receivedMessages')
             .then(() => {
@@ -706,8 +705,6 @@
                 } else if (data.fromChannel === 'websocket') {
                     //delete data.fromChannel;
                     checkNotAlreadyIn(data, 'resentMessages').then(()=>{
-                        
-                        console.log('BRIDGING WEBSOCKET TO WEBRTC');
                         window.nkt.mySwarm.send(data);
                     }).catch(()=>{});
                 }
