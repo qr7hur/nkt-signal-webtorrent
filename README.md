@@ -19,8 +19,6 @@ node app.js
 # Try sending another message
 # Message should be received through webrtc
 
-# Live demo : nkt.....com/#coreV2
-
 # High level apis (TODO better) :
 # - window.nkt.sendEncryptedMessage() to send high level message (for human or bot)
 # - window.nkt.userList 
