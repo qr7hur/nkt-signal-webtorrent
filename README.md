@@ -54,7 +54,7 @@ https://github.com/chr15m/bugout
 https://github.com/webtorrent/bittorrent-tracker
 https://github.com/socketio/socket.io
 
-Additionnal front-end dependencies : 
+Additional front-end dependencies : 
 bs58, bencode, nacl
 
 TODO : package front-end (libsignal+bugout+socket.io+bs58+bencode+nacl+custom:bugout-signal-test.js)
