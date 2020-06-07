@@ -728,7 +728,7 @@
         //logIfVerbose('GENERIC MESSAGE : ');
         //logIfVerbose(data);
         if (Object(data) === data) {
-            if (data.msgFrom) window.nkt.userList[data.msgFrom].isUnreachable = false; //heard from
+            if (data.msgFrom && window.nkt.userList[data.msgFrom]) window.nkt.userList[data.msgFrom].isUnreachable = false; //heard from
             //if (!data.ping && window.nkt.singleSwarmID && (data.msgType === 'encrypted' || data.msgType === 'bugoutEncrypted')) {
             //if (!data.ping && window.nkt.singleSwarmID && (data.msgType === 'encrypted' || data.msgType === 'bugoutEncrypted')) {
             if (!data.ping) {// BRIDGING PEERS
