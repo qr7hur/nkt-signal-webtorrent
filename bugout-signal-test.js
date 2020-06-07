@@ -267,7 +267,10 @@
 
     // BUGOUT SERVER
     const startWebRTCServer = () => {
-        const b = new Bugout(window.nkt.singleSwarmID, { "announce": window.nkt.trackers });
+        const b = new Bugout(window.nkt.singleSwarmID, {
+            "announce": window.nkt.trackers,
+            "iceServers": window.nkt.iceServers
+        });
         //b.heartbeat(2000);
         b.on('message', (address, message) => {
             handleMessageFromSwarm(address, message);
@@ -1259,6 +1262,16 @@
             "wss://hub.bugout.link",
             "wss://tracker.openwebtorrent.com",
             "wss://tracker.btorrent.xyz",
+        ];
+        window.nkt.iceServers = [
+            {
+                urls: [
+                    'stun:stun.l.google.com:19302',
+                    'stun:global.stun.twilio.com:3478',
+                    'stun:stun.avigora.fr:3478',
+                    'stun:stun.1und1.de:3478'
+                ]
+            }
         ];
         window.nkt.userList = {};
         window.nkt.sentMessages = [];
