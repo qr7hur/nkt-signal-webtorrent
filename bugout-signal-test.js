@@ -758,6 +758,7 @@
         if (
             !window.nkt.userList[forAddr]
             || window.nkt.userList[forAddr].preKey
+            || window.nkt.userList[forAddr].useSignal
             //|| window.nkt.userList[forAddr].isUnreachable
         ) return;
         //logIfVerbose('asking for ' + forAddr + '  prekey ...');
@@ -772,7 +773,11 @@
             msgTrial: window.nkt.userList[forAddr].preKeyRequestCount
         });
         //setTimeout((function(forAddr){return function(){startAskingForPreKey(forAddr)}})(forAddr), 5000);
-        setTimeout(() => startAskingForPreKey(forAddr), 5000);
+        if (window.nkt.userList[forAddr].preKeyRequestCount > 100) {
+            delete window.nkt.userList[forAddr];
+        } else {
+            setTimeout(() => startAskingForPreKey(forAddr), 5000);
+        }
         /*
         //if (!window.nkt.userList[forAddr].preKey) {
         if (!window.nkt.userList[forAddr].sessionEstablished) {
@@ -815,8 +820,8 @@
     }
 
     const answerPreKeyRequest = (fromAddr, forAddr) => {
-        logIfVerbose('ANSWERING PREKEY REQUEST')
         if (forAddr === window.nkt.mySwarm.address()) {//anwser for me
+            logIfVerbose('ANSWERING PREKEY REQUEST')
             resilientSend({
                 msgType: 'preKey',
                 msgData: preKeyBundleToString(window.nkt.userList[fromAddr].myNewPreKeyBundle || window.nkt.preKeyBundle),
