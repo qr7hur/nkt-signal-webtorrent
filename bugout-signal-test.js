@@ -416,20 +416,42 @@
     }
 
     /**
+     * An attempt to prevent memory leak on unreachable peers...
+     */
+    const removeUnreachableWires = () => {
+        let toSplice = [];
+        if (Object(window.nkt.mySwarm.torrent) === window.nkt.mySwarm.torrent) {
+            if (Array.isArray(window.nkt.mySwarm.torrent.wires)) {
+                for (let i = 0; i < window.nkt.mySwarm.torrent.wires.length; i++) {
+                    let wire = window.nkt.mySwarm.torrent.wires[i];
+                    if (Object(wire) === wire && Object(wire._readableState) === wire._readableState) {
+                        if (Object(wire._readableState.buffer) === wire._readableState.buffer) {
+                            if (wire._readableState.buffer.length && wire._readableState.buffer.length > 1024) {
+                                toSplice.push(i);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (let index of toSplice) {
+            window.nkt.mySwarm.torrent.wires.splice(index, 1);
+        }
+    }
+
+    /**
      * Starts a timer to repeatedly send self address to all peers
      */
     const beginSwarmAddrBroadcast = () => {
-        if (!window.broadcastingSwarmAddr) {
-            window.broadcastingSwarmAddr = false;
-            resilientSend({
-                msgType: 'newSwarmAddress',
-                msgFrom: window.nkt.mySwarm.address(),
-                msgBugoutPk: window.nkt.mySwarm.pk,
-                msgBugoutEk: window.nkt.mySwarm.ek,
-                msgDate: (new Date()).getTime().toString()
-            });
-            setTimeout(beginSwarmAddrBroadcast, 5000);
-        }
+        resilientSend({
+            msgType: 'newSwarmAddress',
+            msgFrom: window.nkt.mySwarm.address(),
+            msgBugoutPk: window.nkt.mySwarm.pk,
+            msgBugoutEk: window.nkt.mySwarm.ek,
+            msgDate: (new Date()).getTime().toString()
+        });
+        removeUnreachableWires();
+        setTimeout(beginSwarmAddrBroadcast, 5000);
     }
 
     /**
@@ -972,15 +994,16 @@
         if (e.detail.data.msgType === 'encrypted') {
             return;
         }
-        try {
-            const msg = e.detail.data;
-            if (msg.msgType !== 'forUpperLayer') {
-                return;
-            }
-            window.dispatchEvent(
-                new CustomEvent('nktclearmessagereceived', { detail: msg.msgData })
-            );
-        } catch (e) { }
+        const msg = e.detail.data;
+        if (Object(msg) !== msg) {
+            return;
+        }
+        if (msg.msgType !== 'forUpperLayer') {
+            return;
+        }
+        window.dispatchEvent(
+            new CustomEvent('nktclearmessagereceived', { detail: msg.msgData })
+        );
     }
 
     /**
