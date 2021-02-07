@@ -547,4 +547,6 @@ var launch = function() {
 	this.escape = escapeHTML;
 }
 
+// TODO : webworker -> postMessage -> listen for config -> window.nkt.init({iceServers, trackers, socketioURL, etc.})
+window.nkt.init();
 jQuery.chat = new launch();

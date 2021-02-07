@@ -1204,23 +1204,23 @@
     }
 
     /**
-     * console.log in verbose mode only (window.nktVerbose = true)
+     * console.log in verbose mode only (window.nkt.verbose = true)
      * @param {*} msg stringifiable logging message
      */
     const logIfVerbose = (msg) => {
-        if (window.nktVerbose) {
+        if (window.nkt.verbose) {
             console.log(msg);
         }
     }
 
     /**
      * Initialization function
-     * Configiration declaration
+     * Configuration declaration
      * Bugout + Signal initialization
      * Listeners declaration
      */
-    ; ( () => {
-        window.nkt = {};
+    window.nkt = window.nkt || {};
+    window.nkt.init = (config) => {
         window.nkt.singleSwarmID = "nktRYLi0Sn7BEQSPfo3KOiewur1gec";
         window.nkt.trackers = [
             "wss://hub.bugout.link",
@@ -1244,34 +1244,51 @@
                 "credential":"muazkh"
             }
         ];
+        if (window.location.href.indexOf('localhost') > -1) {
+            window.nkt.trackers.push("ws://localhost:8000");
+            window.nkt.websocketEventName = 'nkt';
+            window.nkt.verbose = true;
+            window.nkt.socketioURL = 'http://localhost:3000';
+        } else {
+            window.nkt.websocketEventName = 'corev2';
+            window.nkt.socketioURL = "wss://" + window.location.hostname;
+        }
+        if (config) {
+            window.nkt = Object.assign(window.nkt, config);
+        }
         window.nkt.userList = {};
         window.nkt.sentMessages = [];
         window.nkt.resentMessages = [];
         window.nkt.receivedMessages = [];
-        if (window.location.href.indexOf('localhost') > -1) {
-            window.nkt.trackers.push("ws://localhost:8000");
-            window.nkt.websocket = io('http://localhost:3000');
-            window.nkt.websocketEventName = 'nkt';
-            window.nktVerbose = true;
-        } else {
-            window.nkt.websocket = io("wss://" + window.location.hostname);
-            window.nkt.websocketEventName = 'corev2';
+        if (window.nkt.websocket) {
+            window.nkt.websocket.close();
+        }
+        window.nkt.websocket = io(window.nkt.socketioURL);
+        if (window.nkt.mySwarm) {
+            window.nkt.mySwarm.close();
         }
         window.nkt.mySwarm = startWebRTCServer();
-        signalInit().then((arr) => {
-            window.nkt.signalStore = arr[1];
-            window.nkt.preKeyBundle = arr[0];
-            beginSwarmAddrBroadcast();
-        });
+        if (!window.nkt.signalStore) {
+            signalInit().then((arr) => {
+                window.nkt.signalStore = arr[1];
+                window.nkt.preKeyBundle = arr[0];
+                beginSwarmAddrBroadcast();
+            });
+        }
         window.nkt.websocket.on(
             window.nkt.websocketEventName,
             handlePingFromWebSocket
         );
         window.nkt.sendEncryptedMessage = sendEncryptedMessage;
         window.nkt.sendClearMessage = sendClearMessage;
-        setListeners();
+        if (!window.nkt.alreadySetListeners) {
+            setListeners();
+            window.nkt.alreadySetListeners = true;
+        }
 
         sendClearMessage({ping: Math.random.toString()});
-    })();
+    }
+    
+    //; ( () => {window.nkt.init();})();
 
 })();
